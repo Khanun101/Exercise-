@@ -3,67 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Workout Tracker (สะสมรวม)</title>
+    <title>Workout Calendar Tracker</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1>🏋️‍♀️ ติดตามการออกกำลังกายรายสัปดาห์ 🏋️‍♂️</h1>
-        <div class="days-grid">
-            <div class="day-card" id="day-monday">
-                <h3>วันจันทร์</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="monday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-tuesday">
-                <h3>วันอังคาร</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="tuesday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-wednesday">
-                <h3>วันพุธ</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="wednesday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-thursday">
-                <h3>วันพฤหัสบดี</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="thursday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-friday">
-                <h3>วันศุกร์</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="friday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-saturday">
-                <h3>วันเสาร์</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="saturday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
-            <div class="day-card" id="day-sunday">
-                <h3>วันอาทิตย์</h3>
-                <label class="checkbox-container">
-                    <input type="checkbox" class="workout-checkbox" data-day="sunday">
-                    <span class="checkmark"></span>
-                </label>
-            </div>
+        <h1>🗓️ ปฏิทินติดตามการออกกำลังกาย 🗓️</h1>
+
+        <div class="calendar-header">
+            <button id="prevMonthBtn">&lt;</button>
+            <h2 id="currentMonthYear"></h2>
+            <button id="nextMonthBtn">&gt;</button>
         </div>
 
+        <div class="calendar-grid-header">
+            <div>อาทิตย์</div>
+            <div>จันทร์</div>
+            <div>อังคาร</div>
+            <div>พุธ</div>
+            <div>พฤหัสบดี</div>
+            <div>ศุกร์</div>
+            <div>เสาร์</div>
+        </div>
+
+        <div class="calendar-grid" id="calendarGrid">
+            </div>
+
         <div class="workout-summary">
-            <p>สัปดาห์นี้: <span id="currentWeekWorkoutDays">0</span> วัน</p>
+            <p>เดือนนี้: <span id="currentMonthWorkoutDays">0</span> วัน</p>
             <p>รวมทั้งหมด: <span id="totalCumulativeWorkoutDays">0</span> วัน</p>
         </div>
         <button id="resetAllButton">รีเซ็ตข้อมูลทั้งหมด</button>
@@ -72,4 +40,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
