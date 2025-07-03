@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Calendar Tracker</title>
+    <title>Workout Calendar & Timer Tracker</title>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
 </head>
@@ -34,9 +34,36 @@
             <p>เดือนนี้: <span id="currentMonthWorkoutDays">0</span> วัน</p>
             <p>รวมทั้งหมด: <span id="totalCumulativeWorkoutDays">0</span> วัน</p>
         </div>
-        <button id="resetAllButton">รีเซ็ตข้อมูลทั้งหมด</button>
+
+        <hr class="separator"> <div class="workout-timer-section">
+            <h2>⏱️ ตัวจับเวลาเซ็ตออกกำลังกาย ⏱️</h2>
+
+            <div class="timer-settings">
+                <div class="setting-group">
+                    <label for="timerDurationInput">เวลา/เซ็ต (วินาที):</label>
+                    <input type="number" id="timerDurationInput" value="60" min="1" max="3600">
+                </div>
+                <div class="setting-group">
+                    <label for="targetSetsInput">จำนวนเซ็ตเป้าหมาย:</label>
+                    <input type="number" id="targetSetsInput" value="3" min="1" max="99">
+                </div>
+            </div>
+
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            <div class="set-count-display">
+                เซ็ตปัจจุบัน: <span id="currentSetsCount">0</span> / <span id="displayTargetSets">0</span>
+            </div>
+
+            <div class="timer-controls">
+                <button id="startTimerBtn" class="timer-btn primary">เริ่ม</button>
+                <button id="stopTimerBtn" class="timer-btn warning">หยุด</button>
+                <button id="resetTimerBtn" class="timer-btn secondary">รีเซ็ตเวลา</button>
+                <button id="resetSetsBtn" class="timer-btn danger" disabled>รีเซ็ตเซ็ต</button>
+            </div>
+        </div>
+        <button id="resetAllButton">รีเซ็ตข้อมูลทั้งหมด (ปฏิทิน & เซ็ต)</button>
     </div>
 
     <script src="script.js"></script>
-</body>
+    <audio id="timerSound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio> </body>
 </html>
