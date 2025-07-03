@@ -127,6 +127,15 @@ h1 {
     pointer-events: none; /* ทำให้คลิกไม่ได้ */
 }
 
+/* Style for current day */
+.calendar-day.current-day {
+    background-color: #fffacd; /* สีเหลืองเลมอนอ่อน */
+    border: 2px solid #ffd700; /* ขอบสีทอง */
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2); /* เงาสีเหลืองจางๆ */
+    font-weight: 700;
+    color: #a38f00; /* สีข้อความเข้มขึ้นเล็กน้อย */
+}
+
 /* Style for selected (ticked) workout days */
 .calendar-day.is-workout {
     background-color: #63b3ed; /* สีฟ้าสดใสเมื่อติ๊ก */
@@ -137,8 +146,15 @@ h1 {
     animation: bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 
-/* Checkmark effect for ticked days (optional, can be an icon or just background color) */
-/* This is a simple visual indication, could be replaced with an actual checkmark icon */
+/* ทำให้สีเหลืองยังคงเห็นได้ชัดเจน แม้จะเป็นวันที่ออกกำลังกายแล้ว */
+.calendar-day.is-workout.current-day {
+    /* background-color จะเป็นสีฟ้าของ is-workout แต่มี border/shadow ของ current-day */
+    border: 3px solid #ffd700; /* ขอบสีทองที่หนาขึ้น */
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15), 0 0 0 3px rgba(99, 179, 237, 0.5), 0 0 0 6px rgba(255, 215, 0, 0.6); /* เพิ่ม glow สีเหลือง */
+}
+
+
+/* Checkmark effect for ticked days */
 .calendar-day.is-workout::after {
     content: '✔'; /* Unicode checkmark */
     position: absolute;
@@ -189,7 +205,147 @@ h1 {
     100% { transform: scale(1); }
 }
 
-/* Reset All Button */
+/* Separator */
+.separator {
+    border: 0;
+    height: 1px;
+    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
+    margin: 40px 0;
+}
+
+/* Workout Timer Section */
+.workout-timer-section {
+    background-color: #f7fafc;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 30px;
+}
+
+.workout-timer-section h2 {
+    color: #2b6cb0;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+.timer-settings {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.setting-group label {
+    font-size: 1em;
+    color: #4a5568;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.setting-group input[type="number"] {
+    width: 80px;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    font-size: 1.1em;
+    text-align: center;
+    -moz-appearance: textfield; /* ซ่อนลูกศรใน Firefox */
+}
+/* ซ่อนลูกศรใน Chrome, Safari, Edge */
+.setting-group input[type="number"]::-webkit-outer-spin-button,
+.setting-group input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+
+.timer-display {
+    font-size: 4.5em; /* ขนาดใหญ่สำหรับเวลา */
+    font-weight: 700;
+    color: #e53e3e; /* สีแดงโดดเด่น */
+    margin-bottom: 15px;
+    font-variant-numeric: tabular-nums; /* ทำให้ตัวเลขกว้างเท่ากัน */
+    line-height: 1; /* ปรับ line-height ให้กระชับ */
+}
+
+.set-count-display {
+    font-size: 1.5em;
+    font-weight: 600;
+    color: #2b6cb0;
+    margin-bottom: 25px;
+}
+
+.timer-controls {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.timer-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 700;
+    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.timer-btn:disabled {
+    background-color: #e2e8f0;
+    color: #a0aec0;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.timer-btn.primary {
+    background-color: #48bb78; /* เขียว */
+    color: white;
+}
+.timer-btn.primary:not(:disabled):hover {
+    background-color: #38a169;
+    transform: translateY(-2px);
+}
+
+.timer-btn.warning {
+    background-color: #ecc94b; /* เหลืองส้ม */
+    color: #333;
+}
+.timer-btn.warning:not(:disabled):hover {
+    background-color: #d69e2e;
+    transform: translateY(-2px);
+}
+
+.timer-btn.secondary {
+    background-color: #a0aec0; /* เทา */
+    color: white;
+}
+.timer-btn.secondary:not(:disabled):hover {
+    background-color: #718096;
+    transform: translateY(-2px);
+}
+
+.timer-btn.danger {
+    background-color: #e53e3e; /* แดง */
+    color: white;
+}
+.timer-btn.danger:not(:disabled):hover {
+    background-color: #c53030;
+    transform: translateY(-2px);
+}
+
+/* Make sure the main reset button is also styled */
 #resetAllButton {
     background-color: #d39e00; /* สีเหลืองส้ม */
     color: white;
@@ -198,7 +354,7 @@ h1 {
     border-radius: 8px;
     cursor: pointer;
     font-size: 1em;
-    margin-top: 20px;
+    margin-top: 30px; /* เพิ่มระยะห่าง */
     transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
@@ -207,45 +363,38 @@ h1 {
     background-color: #b8860b;
     transform: translateY(-2px);
 }
-
 #resetAllButton:active {
     transform: translateY(0);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 
-/* Responsive Design */
+/* Responsive Design - Adjustments for timer section */
 @media (max-width: 768px) {
-    .calendar-grid-header div,
-    .calendar-day {
-        font-size: 0.85em;
-        padding: 10px 3px;
-        height: 50px;
+    .workout-timer-section {
+        padding: 20px;
     }
-    h1 {
-        font-size: 1.5em;
+    .timer-display {
+        font-size: 3.5em;
     }
-    .calendar-header h2 {
-        font-size: 1.5em;
+    .set-count-display {
+        font-size: 1.2em;
     }
-    .workout-summary {
-        font-size: 1.1em;
+    .timer-btn {
+        padding: 10px 20px;
+        font-size: 1em;
+    }
+    .timer-settings {
+        gap: 20px;
     }
 }
 
 @media (max-width: 480px) {
-    .container {
-        padding: 15px;
+    .timer-display {
+        font-size: 2.8em;
     }
-    .calendar-day {
-        height: 40px;
-        padding: 8px 2px;
-    }
-    .calendar-header h2 {
-        font-size: 1.2em;
-    }
-    .calendar-header button {
-        padding: 5px 10px;
-        font-size: 1em;
+    .timer-controls {
+        flex-direction: column; /* ปุ่มเรียงลงมาในจอเล็กมาก */
+        gap: 10px;
     }
 }
