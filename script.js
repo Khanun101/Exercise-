@@ -3,7 +3,19 @@ let currentVisibleSection = 'calendarSection'; // ตั้งค่าส่ว
 
 function toggleMenu() {
     const menu = document.getElementById('mainMenu');
-    menu.classList.toggle('active');
+    // ตรวจสอบว่าเมนูถูกซ่อนด้วย display: none หรือไม่
+    // ถ้า display เป็น 'none' ให้เปลี่ยนเป็น 'block'
+    // ถ้า display เป็น 'block' (หรืออื่นๆ) ให้เปลี่ยนเป็น 'none'
+    // วิธีนี้ทำให้ transition ทำงานได้ดีขึ้นเมื่อเปลี่ยนจาก display: none -> block
+    if (menu.style.display === 'block') {
+        menu.style.display = 'none'; // ซ่อนทันที
+        menu.classList.remove('active'); // เอา class active ออก
+    } else {
+        menu.style.display = 'block'; // แสดงทันที
+        setTimeout(() => { // รอเล็กน้อยเพื่อให้ display: block มีผลก่อนเพิ่ม class active
+            menu.classList.add('active'); // เพิ่ม class active เพื่อให้ transition ทำงาน
+        }, 10); // หน่วงเวลาเล็กน้อย
+    }
 }
 
 function showSection(sectionId) {
@@ -19,8 +31,10 @@ function showSection(sectionId) {
     newSection.classList.add('active');
     currentVisibleSection = sectionId; // อัปเดต Section ที่กำลังแสดง
 
-    // ปิดเมนูหลังจากเลือก
-    toggleMenu();
+    // ปิดเมนูหลังจากเลือก (ใช้ toggleMenu อีกครั้งเพื่อปิด)
+    if (document.getElementById('mainMenu').classList.contains('active')) {
+        toggleMenu(); 
+    }
 
     // หากเป็นส่วนปฏิทิน ให้ render ใหม่
     if (sectionId === 'calendarSection') {
@@ -166,3 +180,105 @@ function startTimer() {
     }
     
     // หากถูกหยุดชั่วคราว ให้ใช้เวลาที่เหลืออยู่
+    if (isPaused) {
+        // เวลา remainingTime ยังคงเป็นค่าที่หยุดไว้
+    } else {
+        // ถ้าเป็นการเริ่มเซ็ตใหม่ (หรือเริ่มครั้งแรก) ให้ตั้งเวลาเต็ม
+        remainingTime = initialSetDuration;
+    }
+
+    timerActive = true;
+    isPaused = false;
+
+    // ตั้งค่าสถานะปุ่มและ input
+    startButton.disabled = true;
+    pauseButton.disabled = false;
+    resetTimerButton.disabled = false; // เปิดปุ่ม Reset ให้กดได้ตลอด
+    setDurationInput.disabled = true;
+    totalSetsInput.disabled = true;
+
+    updateTimerDisplay(); // อัปเดตการแสดงผลทันที
+
+    timerInterval = setInterval(() => {
+        remainingTime--;
+        updateTimerDisplay();
+
+        if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null; // เคลียร์ interval
+            timerActive = false; // ตัวจับเวลาหยุดชั่วคราว (แต่จะเริ่มใหม่ทันทีถ้ายังไม่ครบเซ็ต)
+
+            // เล่นเสียงแจ้งเตือน (สามารถเพิ่มได้ถ้าต้องการ)
+            // const audio = new Audio('path/to/your/sound.mp3');
+            // audio.play();
+            
+            alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
+            
+            if (currentSetCount < totalSetsToComplete) {
+                // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เพิ่มเซ็ตและเริ่มเซ็ตถัดไปทันที
+                currentSetCount++;
+                remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
+                startTimer(); // เรียก startTimer ซ้ำเพื่อเริ่มเซ็ตถัดไป
+            } else {
+                // ครบทุกเซ็ตแล้ว
+                alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
+                resetTimerButton.disabled = false; // เปิดปุ่ม Reset หลัก
+                startButton.disabled = true; // ปิดปุ่ม Start
+                pauseButton.disabled = true; // ปิดปุ่ม Pause
+                // หากต้องการให้แสดงเวลาเป็น 00 เมื่อจบครบทุกเซ็ต
+                remainingTime = 0;
+                updateTimerDisplay();
+            }
+        }
+    }, 1000); // ทุก 1 วินาที
+}
+
+function pauseTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerActive = false;
+        isPaused = true;
+        
+        startButton.disabled = false; // ให้กดเริ่มต่อได้
+        pauseButton.disabled = true;
+        resetTimerButton.disabled = false; // อนุญาตให้ Reset ได้ตลอดเวลาที่หยุด
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerActive = false;
+    isPaused = false;
+    
+    remainingTime = 0;
+    currentSetCount = 0;
+    initialSetDuration = 0; // รีเซ็ตค่านี้ด้วย เพื่อให้ดึงจาก input ใหม่เมื่อเริ่ม
+    totalSetsToComplete = 0; // รีเซ็ตจำนวนเซ็ตทั้งหมด
+
+    // รีเซ็ตปุ่มและ input
+    startButton.disabled = false;
+    pauseButton.disabled = true;
+    resetTimerButton.disabled = true;
+    setDurationInput.disabled = false;
+    totalSetsInput.disabled = false;
+
+    // ตั้งค่า Input เป็นค่าเริ่มต้น
+    setDurationInput.value = 60;
+    totalSetsInput.value = 3;
+
+    updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็น 00 และ 0/0
+}
+
+// Event Listeners สำหรับปุ่ม Timer
+startButton.addEventListener('click', startTimer);
+pauseButton.addEventListener('click', pauseTimer);
+resetTimerButton.addEventListener('click', resetTimer);
+
+// เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
+document.addEventListener('DOMContentLoaded', function() {
+    showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
+    renderCalendar(); // Render ปฏิทินครั้งแรก
+    resetTimer(); // รีเซ็ต Timer เพื่อตั้งค่าเริ่มต้นทั้งหมด
+});
