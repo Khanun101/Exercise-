@@ -1,414 +1,262 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- Calendar Elements ---
-    const calendarGrid = document.getElementById('calendarGrid');
-    const currentMonthYearHeader = document.getElementById('currentMonthYear');
-    const prevMonthBtn = document.getElementById('prevMonthBtn');
-    const nextMonthBtn = document.getElementById('nextMonthBtn');
-    const currentMonthWorkoutDaysSpan = document.getElementById('currentMonthWorkoutDays');
-    const totalCumulativeWorkoutDaysSpan = document.getElementById('totalCumulativeWorkoutDays');
-    const resetAllButton = document.getElementById('resetAllButton');
+// --- ส่วนควบคุมการแสดงผลส่วนต่างๆ (เมนูและ Section) ---
+let currentVisibleSection = 'calendarSection'; // ตั้งค่าส่วนที่แสดงอยู่ปัจจุบัน
 
-    // --- Timer Elements ---
-    const timerDurationInput = document.getElementById('timerDurationInput');
-    const targetSetsInput = document.getElementById('targetSetsInput');
-    const timerDisplay = document.getElementById('timerDisplay');
-    const currentSetsCountSpan = document.getElementById('currentSetsCount');
-    const displayTargetSetsSpan = document.getElementById('displayTargetSets');
-    const startTimerBtn = document.getElementById('startTimerBtn');
-    const stopTimerBtn = document.getElementById('stopTimerBtn');
-    const resetTimerBtn = document.getElementById('resetTimerBtn');
-    const resetSetsBtn = document.getElementById('resetSetsBtn');
-    const timerSound = document.getElementById('timerSound'); // Audio element for sound
+function toggleMenu() {
+    const menu = document.getElementById('mainMenu');
+    menu.classList.toggle('active');
+}
 
-    // --- Calendar State ---
-    let allWorkoutDates = new Set();
-    let currentDate = new Date();
-    let currentYear = currentDate.getFullYear();
-    let currentMonth = currentDate.getMonth();
-    const today = new Date();
-    const todayFormatted = formatDate(today);
+function showSection(sectionId) {
+    // ซ่อน Section ที่กำลังแสดงอยู่
+    if (currentVisibleSection) {
+        document.getElementById(currentVisibleSection).classList.remove('active');
+        document.getElementById(currentVisibleSection).classList.add('hidden');
+    }
 
+    // แสดง Section ที่ต้องการ
+    const newSection = document.getElementById(sectionId);
+    newSection.classList.remove('hidden');
+    newSection.classList.add('active');
+    currentVisibleSection = sectionId; // อัปเดต Section ที่กำลังแสดง
+
+    // ปิดเมนูหลังจากเลือก
+    toggleMenu();
+
+    // หากเป็นส่วนปฏิทิน ให้ render ใหม่
+    if (sectionId === 'calendarSection') {
+        renderCalendar();
+    } else if (sectionId === 'timerSection') {
+        resetTimer(); // รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer
+    }
+}
+
+// --- ส่วนปฏิทิน ---
+const calendarGridEl = document.getElementById('calendar-grid');
+const currentMonthYearEl = document.getElementById('currentMonthYear');
+const totalWorkoutDaysEl = document.getElementById('totalWorkoutDays');
+
+let currentCalendarDate = new Date(); // วันที่ปัจจุบันของปฏิทินที่แสดงอยู่
+let workoutDays = JSON.parse(localStorage.getItem('workoutDays')) || {}; // เก็บวันที่ออกกำลังกายไว้ใน localStorage
+
+function renderCalendar() {
+    const year = currentCalendarDate.getFullYear();
+    const month = currentCalendarDate.getMonth(); // 0-11
+    
+    // ตั้งชื่อเดือนเป็นภาษาไทย
     const monthNames = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
+    currentMonthYearEl.textContent = `${monthNames[month]} ${year}`;
 
-    // --- Timer State ---
-    let timerInterval = null; // Initialize as null
-    let remainingTime = 0;
-    let initialTimerDuration = 60;
-    let completedSets = 0;
-    let targetSets = 3;
+    // หาข้อมูลวันในเดือน
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = อาทิตย์, 1 = จันทร์...
 
-    // --- Notification State ---
-    let notificationPermissionRequested = false; 
+    let html = `
+        <div class="day-header">อา</div>
+        <div class="day-header">จ</div>
+        <div class="day-header">อ</div>
+        <div class="day-header">พ</div>
+        <div class="day-header">พฤ</div>
+        <div class="day-header">ศ</div>
+        <div class="day-header">ส</div>
+    `;
 
-    // --- Helper Functions ---
-    function formatDate(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+    // เพิ่มช่องว่างสำหรับวันก่อนหน้าวันที่ 1 ของเดือน
+    for (let i = 0; i < startDayOfWeek; i++) {
+        html += `<div class="day-cell empty"></div>`;
     }
 
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const remainingSeconds = seconds % 60;
-        const formattedMinutes = String(minutes).padStart(2, '0');
-        const formattedSeconds = String(remainingSeconds).padStart(2, '0');
-        return `${formattedMinutes}:${formattedSeconds}`;
-    }
+    // เพิ่มวันในปฏิทิน
+    let totalCheckedDays = 0;
+    const today = new Date();
+    const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`; // รูปแบบYYYY-M-D ของวันปัจจุบัน
 
-    // --- Calendar Rendering ---
-    function renderCalendar() {
-        calendarGrid.innerHTML = '';
-        currentMonthYearHeader.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+    for (let i = 1; i <= lastDayOfMonth; i++) {
+        const dateString = `${year}-${month + 1}-${i}`; // รูปแบบYYYY-M-D สำหรับแต่ละวันในปฏิทิน
+        let classes = 'day-cell';
 
-        const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        const startDayIndex = firstDayOfMonth.getDay();
-
-        for (let i = 0; i < startDayIndex; i++) {
-            const emptyDay = document.createElement('div');
-            emptyDay.classList.add('calendar-day', 'other-month');
-            calendarGrid.appendChild(emptyDay);
+        // ไฮไลต์วันปัจจุบัน
+        if (dateString === todayString) {
+            classes += ' today';
         }
 
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayElement = document.createElement('div');
-            dayElement.classList.add('calendar-day');
-            dayElement.textContent = day;
+        // ตรวจสอบว่าวันนี้มีการติ๊กถูกหรือไม่
+        if (workoutDays[dateString]) {
+            classes += ' checked';
+            totalCheckedDays++;
+        }
 
-            const fullDate = new Date(currentYear, currentMonth, day);
-            const formattedDate = formatDate(fullDate);
-            dayElement.dataset.date = formattedDate;
+        html += `
+            <div class="${classes}" data-date="${dateString}">
+                ${i}
+                <span class="checkmark">&#10003;</span>
+            </div>
+        `;
+    }
+    calendarGridEl.innerHTML = html;
+    totalWorkoutDaysEl.textContent = totalCheckedDays;
 
-            if (formattedDate === todayFormatted) {
-                dayElement.classList.add('current-day');
+    // เพิ่ม Event Listener ให้แต่ละวัน (ไม่ใช่วันว่าง)
+    document.querySelectorAll('#calendar-grid .day-cell:not(.empty)').forEach(cell => {
+        cell.addEventListener('click', function() {
+            const date = this.dataset.date;
+            if (workoutDays[date]) {
+                delete workoutDays[date]; // ยกเลิกติ๊กถูก
+            } else {
+                workoutDays[date] = true; // ติ๊กถูก
             }
-
-            if (allWorkoutDates.has(formattedDate)) {
-                dayElement.classList.add('is-workout');
-            }
-
-            dayElement.addEventListener('click', () => {
-                dayElement.classList.toggle('is-workout');
-                if (dayElement.classList.contains('is-workout')) {
-                    allWorkoutDates.add(formattedDate);
-                } else {
-                    allWorkoutDates.delete(formattedDate);
-                }
-                saveWorkoutDates();
-                updateWorkoutCounts();
-            });
-
-            calendarGrid.appendChild(dayElement);
-        }
-
-        const totalDaysInGrid = startDayIndex + daysInMonth;
-        const remainingCells = 42 - totalDaysInGrid;
-        for (let i = 0; i < remainingCells && i < 7; i++) {
-             const emptyDay = document.createElement('div');
-             emptyDay.classList.add('calendar-day', 'other-month');
-             calendarGrid.appendChild(emptyDay);
-        }
-
-        updateWorkoutCounts();
-    }
-
-    // --- Local Storage Management for Calendar ---
-    function saveWorkoutDates() {
-        localStorage.setItem('workoutCalendarDates', JSON.stringify(Array.from(allWorkoutDates)));
-    }
-
-    function loadWorkoutDates() {
-        const savedDates = localStorage.getItem('workoutCalendarDates');
-        if (savedDates) {
-            allWorkoutDates = new Set(JSON.parse(savedDates));
-        }
-    }
-
-    // --- Update Display Counts (Calendar) ---
-    function updateWorkoutCounts() {
-        let currentMonthCount = 0;
-        const startOfMonth = new Date(currentYear, currentMonth, 1);
-        const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
-
-        allWorkoutDates.forEach(dateStr => {
-            const date = new Date(dateStr);
-            date.setHours(0,0,0,0);
-            startOfMonth.setHours(0,0,0,0);
-            endOfMonth.setHours(0,0,0,0);
-
-            if (date >= startOfMonth && date <= endOfMonth) {
-                currentMonthCount++;
-            }
+            localStorage.setItem('workoutDays', JSON.stringify(workoutDays)); // บันทึกข้อมูล
+            renderCalendar(); // อัปเดตปฏิทิน
         });
+    });
+}
 
-        const totalCumulativeCount = allWorkoutDates.size;
+// ฟังก์ชันเปลี่ยนเดือนในปฏิทิน
+function changeMonth(delta) {
+    currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+    renderCalendar();
+}
 
-        currentMonthWorkoutDaysSpan.classList.add('count-pulse');
-        currentMonthWorkoutDaysSpan.textContent = currentMonthCount;
-        currentMonthWorkoutDaysSpan.addEventListener('animationend', () => {
-            currentMonthWorkoutDaysSpan.classList.remove('count-pulse');
-        }, { once: true });
+// --- ส่วนตัวจับเวลา ---
+const setDurationInput = document.getElementById('setDuration');
+const totalSetsInput = document.getElementById('totalSets');
+const startButton = document.getElementById('startButton');
+const pauseButton = document.getElementById('pauseButton');
+const resetTimerButton = document.getElementById('resetTimerButton');
+const currentTimeEl = document.getElementById('currentTime');
+const currentSetEl = document.getElementById('currentSet');
+const displayTotalSetsEl = document.getElementById('displayTotalSets');
 
-        totalCumulativeWorkoutDaysSpan.classList.add('count-pulse');
-        totalCumulativeWorkoutDaysSpan.textContent = totalCumulativeCount;
-        totalCumulativeWorkoutDaysSpan.addEventListener('animationend', () => {
-            totalCumulativeWorkoutDaysSpan.classList.remove('count-pulse');
-        }, { once: true });
-    }
+let timerInterval;
+let initialSetDuration;     // เก็บเวลาเริ่มต้นของแต่ละเซ็ต
+let remainingTime;          // เวลาที่เหลือในเซ็ตปัจจุบัน
+let currentSetCount;        // จำนวนเซ็ตที่กำลังทำอยู่ (1, 2, 3...)
+let totalSetsToComplete;    // จำนวนเซ็ตทั้งหมดที่ผู้ใช้กำหนด
+let timerActive = false;    // สถานะว่าตัวจับเวลากำลังทำงานอยู่หรือไม่
+let isPaused = false;       // สถานะว่าตัวจับเวลาถูกหยุดชั่วคราวหรือไม่
 
-    // --- Notification Logic ---
-    function requestNotificationPermission() {
-        if (!("Notification" in window)) {
-            console.warn("This browser does not support desktop notification.");
+function updateTimerDisplay() {
+    currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
+    currentSetEl.textContent = currentSetCount;
+    displayTotalSetsEl.textContent = totalSetsToComplete;
+}
+
+function startTimer() {
+    if (timerActive) return; // ป้องกันการกดเริ่มซ้ำขณะทำงาน
+
+    // กำหนดค่าเริ่มต้นเมื่อเริ่มครั้งแรก
+    if (currentSetCount === 0) {
+        initialSetDuration = parseInt(setDurationInput.value);
+        totalSetsToComplete = parseInt(totalSetsInput.value);
+
+        if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
+            isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
+            alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
             return;
         }
-
-        if (Notification.permission === "default" && !notificationPermissionRequested) {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    console.log("Notification permission granted!");
-                } else {
-                    console.warn("Notification permission denied.");
-                }
-                notificationPermissionRequested = true;
-            });
-        }
+        currentSetCount = 1; // เริ่มต้นที่เซ็ต 1
+        remainingTime = initialSetDuration;
+    } else if (!isPaused) { // หากไม่ได้ถูกหยุดชั่วคราวแต่กด Start แสดงว่ากำลังเริ่มเซ็ตใหม่หลังจบเซ็ตก่อนหน้า
+        remainingTime = initialSetDuration;
     }
+    
+    timerActive = true;
+    isPaused = false;
 
-    function showTimerNotification(message) {
-        if (Notification.permission === "granted") {
-            new Notification("Workout Timer", {
-                body: message,
-                icon: 'https://cdn-icons-png.flaticon.com/512/1146/1146816.png'
-            });
-        } else {
-            console.log("Cannot show notification: permission not granted.");
-        }
-    }
+    // ตั้งค่าสถานะปุ่มและ input
+    startButton.disabled = true;
+    pauseButton.disabled = false;
+    resetTimerButton.disabled = true; // ปุ่ม Reset หลักปิดไว้จนกว่าจะครบทุกเซ็ตหรือกด Pause
 
-    // --- Timer Functions ---
-    function updateTimerDisplay() {
-        timerDisplay.textContent = formatTime(remainingTime);
-    }
+    setDurationInput.disabled = true;
+    totalSetsInput.disabled = true;
 
-    function updateSetDisplay() {
-        currentSetsCountSpan.textContent = completedSets;
-        displayTargetSetsSpan.textContent = targetSets;
+    updateTimerDisplay(); // อัปเดตการแสดงผลทันที
 
-        // เปิด/ปิดปุ่มรีเซ็ตเซ็ต
-        resetSetsBtn.disabled = (completedSets === 0);
+    timerInterval = setInterval(() => {
+        remainingTime--;
+        updateTimerDisplay();
 
-        // จัดการสถานะปุ่ม Start/Stop และข้อความแสดงผล
-        if (completedSets >= targetSets && targetSets > 0) {
-            timerDisplay.textContent = "DONE!";
-            startTimerBtn.disabled = true;
-            stopTimerBtn.disabled = true; // เมื่อทำครบแล้ว ปุ่มหยุดไม่ควรใช้งาน
-        } else {
-            // ถ้ายังไม่ครบ และ Timer ไม่ได้กำลังทำงานอยู่ (เช่น เพิ่งโหลดหน้า, หรือเซ็ตก่อนหน้าเพิ่งจบ)
-            if (!timerInterval) { // timerInterval เป็น null เมื่อไม่มีการจับเวลาทำงาน
-                startTimerBtn.disabled = false;
-            }
-            stopTimerBtn.disabled = true; // ปุ่มหยุดควรถูกปิดใช้งานเมื่อไม่มี Timer ทำงานอยู่
-        }
-    }
+        if (remainingTime <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null; // เคลียร์ interval
+            timerActive = false; // ตัวจับเวลาหยุดชั่วคราว
 
-    function startTimer() {
-        requestNotificationPermission();
-
-        // Ensure remainingTime is valid before starting
-        if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
-            remainingTime = initialTimerDuration;
-        }
-        // Make sure initialTimerDuration is always positive
-        if (initialTimerDuration <= 0) {
-            initialTimerDuration = 1; // Default to 1 second if invalid
-            timerDurationInput.value = initialTimerDuration;
-        }
-        
-        if (timerInterval) clearInterval(timerInterval); // Clear old interval if exists
-        timerInterval = null; // Ensure it's null before setting a new one
-
-        startTimerBtn.disabled = true;
-        stopTimerBtn.disabled = false;
-        resetTimerBtn.disabled = false;
-
-        updateTimerDisplay(); // Update display immediately when starting
-
-        timerInterval = setInterval(() => {
-            if (remainingTime > 0) {
-                remainingTime--;
-                updateTimerDisplay();
-            } else { // Timer has reached 00:00 for the current set
-                console.log("Timer reached 0. Processing set completion."); // DEBUG LOG
-                clearInterval(timerInterval); // Stop the current interval
-                timerInterval = null; // Mark interval as stopped
-                timerSound.play(); // Play sound
-
-                // Increment completed sets if not already at target
-                if (completedSets < targetSets) {
-                    completedSets++; // นับ 1 เซ็ต
-                    saveTimerState();
-                    showTimerNotification(`Set ${completedSets} completed!`);
-                }
+            // เล่นเสียงแจ้งเตือน (สามารถเพิ่มได้ถ้าต้องการ)
+            // const audio = new Audio('path/to/your/sound.mp3');
+            // audio.play();
+            
+            alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
+            
+            if (currentSetCount < totalSetsToComplete) {
+                // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เตรียมพร้อมสำหรับเซ็ตถัดไป
+                currentSetCount++;
+                remainingTime = initialSetDuration; 
+                updateTimerDisplay(); // อัปเดต UI ก่อนเริ่มเซ็ตใหม่
                 
-                updateSetDisplay(); // Update the UI for sets count and button states
-
-                // Check if all target sets are completed
-                if (completedSets >= targetSets && targetSets > 0) {
-                    // All sets done, UI already updated by updateSetDisplay()
-                    // Buttons handled by updateSetDisplay()
-                } else {
-                    // Not all sets done, reset time for the next set
-                    remainingTime = initialTimerDuration;
-                    updateTimerDisplay(); // Show the reset time
-                    startTimerBtn.disabled = false; // Enable start button for next set
-                }
-                stopTimerBtn.disabled = true; // Stop button should be disabled when timer is not running
+                startButton.disabled = false; // เปิดปุ่ม Start เพื่อเริ่มเซ็ตถัดไป
+                pauseButton.disabled = true; // ปิด Pause
+                resetTimerButton.disabled = false; // เปิดปุ่ม Reset ให้กดได้
+            } else {
+                // ครบทุกเซ็ตแล้ว
+                alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
+                resetTimerButton.disabled = false; // เปิดปุ่ม Reset หลัก
+                startButton.disabled = true; // ปิดปุ่ม Start
+                pauseButton.disabled = true; // ปิดปุ่ม Pause
             }
-        }, 1000);
-    }
+        }
+    }, 1000); // ทุก 1 วินาที
+}
 
-    function stopTimer() {
+function pauseTimer() {
+    if (timerInterval) {
         clearInterval(timerInterval);
-        timerInterval = null; // Set to null to indicate no active interval
-        startTimerBtn.disabled = false;
-        stopTimerBtn.disabled = true;
-        resetTimerBtn.disabled = false;
-    }
-
-    function resetTimer() {
-        stopTimer(); // This will also handle button states
-        remainingTime = initialTimerDuration;
-        updateTimerDisplay();
-        // Buttons handled by stopTimer() and updateSetDisplay()
-    }
-
-    function resetSets() {
-        if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตจำนวนเซ็ตที่ทำไปแล้ว?')) {
-            completedSets = 0;
-            resetTimer(); // รีเซ็ตเวลาด้วย
-            saveTimerState();
-            updateSetDisplay(); // อัปเดต UI ให้แสดง 0 เซ็ต
-        }
-    }
-
-    // --- Local Storage Management for Timer ---
-    function saveTimerState() {
-        const timerState = {
-            initialDuration: initialTimerDuration,
-            targetSets: targetSets,
-            completedSets: completedSets
-        };
-        localStorage.setItem('workoutTimerState', JSON.stringify(timerState));
-    }
-
-    function loadTimerState() {
-        const savedState = localStorage.getItem('workoutTimerState');
-        if (savedState) {
-            const parsedState = JSON.parse(savedState);
-            initialTimerDuration = parsedState.initialDuration || 60;
-            targetSets = parsedState.targetSets || 3;
-            completedSets = parsedState.completedSets || 0;
-        }
-
-        timerDurationInput.value = initialTimerDuration;
-        targetSetsInput.value = targetSets;
-
-        // กำหนด remainingTime ให้ถูกต้องตามสถานะ completedSets
-        if (completedSets >= targetSets && targetSets > 0) {
-            remainingTime = 0; // ถ้าทำครบแล้ว ให้เวลาเป็น 0 เพื่อแสดง DONE!
-        } else {
-            remainingTime = initialTimerDuration; // ถ้ายังไม่ครบ ให้เป็นเวลาเริ่มต้นของเซ็ต
-        }
+        timerInterval = null;
+        timerActive = false;
+        isPaused = true;
         
-        updateTimerDisplay();
-        updateSetDisplay(); // ต้องเรียกเพื่อตั้งค่าปุ่ม disabled และข้อความ "DONE!" ให้ถูกต้องตั้งแต่โหลด
+        startButton.disabled = false; // ให้กดเริ่มต่อได้
+        pauseButton.disabled = true;
+        resetTimerButton.disabled = false; // อนุญาตให้ Reset ได้ตลอดเวลาที่หยุด
     }
+}
 
-    // --- Event Listeners ---
-    prevMonthBtn.addEventListener('click', () => {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        renderCalendar();
-    });
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    timerActive = false;
+    isPaused = false;
+    
+    remainingTime = 0;
+    currentSetCount = 0;
+    initialSetDuration = 0; // รีเซ็ตค่านี้ด้วย
+    totalSetsToComplete = 0; // รีเซ็ตจำนวนเซ็ตทั้งหมด
 
-    nextMonthBtn.addEventListener('click', () => {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        renderCalendar();
-    });
+    // รีเซ็ตปุ่มและ input
+    startButton.disabled = false;
+    pauseButton.disabled = true;
+    resetTimerButton.disabled = true;
+    setDurationInput.disabled = false;
+    totalSetsInput.disabled = false;
 
-    timerDurationInput.addEventListener('change', () => {
-        const newDuration = parseInt(timerDurationInput.value);
-        if (newDuration > 0) {
-            initialTimerDuration = newDuration;
-            // ถ้า Timer ไม่ได้กำลังทำงาน หรือเวลาหมด ให้รีเซ็ตเวลาที่แสดงผลทันที
-            if (!timerInterval || remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
-                remainingTime = initialTimerDuration;
-                updateTimerDisplay();
-            }
-            saveTimerState();
-        } else {
-            timerDurationInput.value = initialTimerDuration;
-        }
-    });
+    // ตั้งค่า Input เป็นค่าเริ่มต้น
+    setDurationInput.value = 60;
+    totalSetsInput.value = 3;
 
-    targetSetsInput.addEventListener('change', () => {
-        const newTargetSets = parseInt(targetSetsInput.value);
-        if (newTargetSets > 0) {
-            targetSets = newTargetSets;
-            // ถ้าเซ็ตที่ทำไปแล้วเกินเป้าหมายใหม่ ให้ปรับให้เท่ากับเป้าหมาย
-            if (completedSets > targetSets) {
-                completedSets = targetSets;
-            }
-            saveTimerState();
-            updateSetDisplay();
-            // ตรวจสอบสถานะปุ่มหลังจากเปลี่ยนเป้าหมาย
-            if (completedSets >= targetSets && targetSets > 0) {
-                stopTimer(); // ตรวจสอบให้แน่ใจว่าหยุด
-                timerDisplay.textContent = "DONE!";
-                startTimerBtn.disabled = true;
-            } else if (!timerInterval) { // ถ้าไม่ได้อยู่ในสถานะ DONE และไม่ได้จับเวลาอยู่
-                startTimerBtn.disabled = false; // เปิดปุ่มเริ่ม
-            }
-        } else {
-            targetSetsInput.value = targetSets;
-        }
-    });
+    updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็น 00 และ 0/0
+}
 
-    startTimerBtn.addEventListener('click', startTimer);
-    stopTimerBtn.addEventListener('click', stopTimer);
-    resetTimerBtn.addEventListener('click', resetTimer);
-    resetSetsBtn.addEventListener('click', resetSets);
+// Event Listeners สำหรับปุ่ม Timer
+startButton.addEventListener('click', startTimer);
+pauseButton.addEventListener('click', pauseTimer);
+resetTimerButton.addEventListener('click', resetTimer);
 
-    resetAllButton.addEventListener('click', () => {
-        if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตข้อมูลทั้งหมด? ทั้งปฏิทินและตัวจับเวลาจะถูกรีเซ็ตและหายไปอย่างถาวร')) {
-            localStorage.removeItem('workoutCalendarDates');
-            allWorkoutDates.clear();
-            renderCalendar();
-
-            localStorage.removeItem('workoutTimerState');
-            initialTimerDuration = 60;
-            targetSets = 3;
-            completedSets = 0;
-            resetTimer(); // รีเซ็ตเวลา
-            updateSetDisplay(); // อัปเดตเซ็ตและปุ่ม
-        }
-    });
-
-    // --- Initialization ---
-    loadWorkoutDates();
-    renderCalendar();
-
-    loadTimerState();
+// เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
+document.addEventListener('DOMContentLoaded', function() {
+    showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
+    renderCalendar(); // Render ปฏิทินครั้งแรก
+    resetTimer(); // รีเซ็ต Timer เพื่อตั้งค่าเริ่มต้นทั้งหมด
 });
