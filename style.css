@@ -1,400 +1,717 @@
-/* นำเข้า Font */
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap');
+/* กำหนดตัวแปรสีหลักเพื่อให้จัดการง่าย */
+:root {
+    --primary-color: #4CAF50; /* สีเขียวหลัก */
+    --secondary-color: #FFC107; /* สีเหลืองสำหรับไฮไลต์ (วันปัจจุบัน) */
+    --background-color: #f0f2f5; /* สีพื้นหลังอ่อนๆ สบายตา */
+    --text-color: #333; /* สีข้อความทั่วไป */
+    --border-color: #ddd; /* สีเส้นขอบ */
+    --shadow-color: rgba(0, 0, 0, 0.1); /* สีเงา */
+    --light-green: #e8f5e9; /* เขียวอ่อนสำหรับพื้นหลังบางส่วน */
+    --checked-day-color: #c8e6c9; /* เขียวอ่อนสำหรับวันที่ติ๊กถูก */
+}
 
+/* กำหนดรูปแบบพื้นฐานของ Body */
 body {
-    font-family: 'Sarabun', sans-serif;
-    background-color: #f0f4f8; /* สีพื้นหลังสบายตา */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
+    font-family: 'Kanit', sans-serif; /* ใช้ฟอนต์ Kanit ที่เรียกมาจาก Google Fonts */
     margin: 0;
-    color: #334e68;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
     line-height: 1.6;
-    overflow-x: hidden;
+    overflow-x: hidden; /* ป้องกันการเลื่อนแนวนอน */
 }
 
-.container {
-    background-color: #ffffff;
-    padding: 30px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+/* Header */
+header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px var(--shadow-color);
+    position: relative; /* สำหรับตำแหน่งเมนู */
+    z-index: 1000; /* ให้ Header อยู่บนสุด */
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+/* Hamburger Menu Icon */
+.menu-icon {
+    font-size: 2rem;
+    cursor: pointer;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.menu-icon:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Navigation Menu (ซ่อน/แสดงด้วย JavaScript) */
+nav {
+    position: absolute;
+    top: 100%; /* อยู่ใต้ header */
+    right: 1.5rem;
+    background-color: var(--primary-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px var(--shadow-color);
+    display: none; /* ซ่อนไว้ตอนแรก */
+    min-width: 200px;
+}
+
+nav.active {
+    display: block; /* แสดงเมื่อมี class 'active' */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 12px 20px;
+    transition: background-color 0.3s ease;
+}
+
+nav ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Main Content Area */
+main {
+    padding: 20px;
+    max-width: 900px; /* จำกัดความกว้างเพื่อความสบายตา */
+    margin: 20px auto; /* จัดกึ่งกลาง */
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px var(--shadow-color);
+}
+
+section {
+    padding: 20px 0;
+}
+
+section h2 {
     text-align: center;
-    max-width: 900px;
-    width: 95%;
-    margin: 20px auto;
+    color: var(--primary-color);
+    margin-bottom: 25px;
+    font-size: 1.6rem;
+    font-weight: 600;
 }
 
-h1 {
-    color: #2c5282;
-    margin-bottom: 30px;
-    font-weight: 700;
+/* คลาสสำหรับซ่อน/แสดง Section */
+.hidden {
+    display: none;
 }
 
-/* Calendar Header (Month Navigation) */
-.calendar-header {
+.active {
+    display: block;
+}
+
+/* --- Calendar Section Styles --- */
+.calendar-nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
-    background-color: #e2f0f9;
-    padding: 10px 20px;
-    border-radius: 15px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 0 10px;
 }
 
-.calendar-header h2 {
+.calendar-nav h3 {
     margin: 0;
-    color: #3182ce;
-    font-size: 1.8em;
-    font-weight: 600;
+    font-size: 1.4rem;
+    color: var(--text-color);
+    font-weight: 500;
 }
 
-.calendar-header button {
-    background-color: #63b3ed;
+.calendar-nav button {
+    background-color: var(--primary-color);
     color: white;
     border: none;
     padding: 8px 15px;
-    border-radius: 8px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 1.2em;
-    transition: background-color 0.2s ease-out, transform 0.2s ease-out;
+    font-size: 1rem;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-.calendar-header button:hover {
-    background-color: #4299e1;
-    transform: scale(1.05);
+.calendar-nav button:hover {
+    background-color: #388E3C; /* เขียวเข้มขึ้นเมื่อ Hover */
+    transform: translateY(-2px);
 }
 
-.calendar-header button:active {
-    transform: scale(0.98);
-}
-
-/* Calendar Day Names Header */
-.calendar-grid-header {
+#calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    background-color: #a7d9ed; /* สีฟ้าอ่อน */
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.calendar-grid-header div {
-    padding: 10px 5px;
-    font-weight: 700;
-    color: #2c5282;
-    font-size: 0.95em;
+    grid-template-columns: repeat(7, 1fr); /* 7 คอลัมน์สำหรับวันในสัปดาห์ */
+    gap: 5px; /* ช่องว่างระหว่างวัน */
     text-align: center;
 }
 
-/* Calendar Grid (Days) */
-.calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
-    margin-bottom: 30px;
-}
-
-.calendar-day {
-    background-color: #f7fafc; /* สีอ่อนมากสำหรับวันปกติ */
-    border-radius: 10px;
-    padding: 15px 5px;
-    height: 60px; /* กำหนดความสูงให้เท่ากัน */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    font-size: 1.1em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    position: relative; /* สำหรับ checkmark */
-    overflow: hidden; /* ซ่อนสิ่งที่เกิน */
-}
-
-.calendar-day:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-/* Styles for days not in current month */
-.calendar-day.other-month {
-    background-color: #ebf4ff; /* สีจางลงสำหรับวันของเดือนอื่น */
-    color: #a0aec0;
-    cursor: default;
-    opacity: 0.7;
-    pointer-events: none; /* ทำให้คลิกไม่ได้ */
-}
-
-/* Style for current day */
-.calendar-day.current-day {
-    background-color: #fffacd; /* สีเหลืองเลมอนอ่อน */
-    border: 2px solid #ffd700; /* ขอบสีทอง */
-    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2); /* เงาสีเหลืองจางๆ */
-    font-weight: 700;
-    color: #a38f00; /* สีข้อความเข้มขึ้นเล็กน้อย */
-}
-
-/* Style for selected (ticked) workout days */
-.calendar-day.is-workout {
-    background-color: #63b3ed; /* สีฟ้าสดใสเมื่อติ๊ก */
+.day-header {
+    font-weight: 600;
+    padding: 12px 0;
+    background-color: var(--primary-color);
     color: white;
-    font-weight: 700;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15), 0 0 0 3px rgba(99, 179, 237, 0.5); /* เพิ่ม glow */
-    transform: scale(1.03);
-    animation: bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    border-radius: 5px;
+    font-size: 0.95rem;
 }
 
-/* ทำให้สีเหลืองยังคงเห็นได้ชัดเจน แม้จะเป็นวันที่ออกกำลังกายแล้ว */
-.calendar-day.is-workout.current-day {
-    /* background-color จะเป็นสีฟ้าของ is-workout แต่มี border/shadow ของ current-day */
-    border: 3px solid #ffd700; /* ขอบสีทองที่หนาขึ้น */
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15), 0 0 0 3px rgba(99, 179, 237, 0.5), 0 0 0 6px rgba(255, 215, 0, 0.6); /* เพิ่ม glow สีเหลือง */
-}
-
-
-/* Checkmark effect for ticked days */
-.calendar-day.is-workout::after {
-    content: '✔'; /* Unicode checkmark */
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    font-size: 0.9em;
-    color: rgba(255, 255, 255, 0.8);
-    opacity: 0;
-    animation: fadeInCheck 0.3s forwards;
-}
-
-@keyframes fadeInCheck {
-    from { opacity: 0; transform: scale(0.5); }
-    to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes bounceIn {
-    0% { transform: scale(0.9); opacity: 0; }
-    50% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1.03); }
-}
-
-
-/* Workout Summary */
-.workout-summary {
-    margin-top: 40px;
-    font-size: 1.5em;
-    font-weight: 700;
-    color: #2b6cb0;
-    line-height: 1.8;
-}
-
-#currentMonthWorkoutDays,
-#totalCumulativeWorkoutDays {
-    display: inline-block;
-    color: #e53e3e; /* สีแดงสำหรับตัวเลข */
-    transition: transform 0.3s ease-out, color 0.3s ease-out;
-}
-
-/* Animation for counter update */
-.count-pulse {
-    animation: countPulse 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-
-@keyframes countPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-/* Separator */
-.separator {
-    border: 0;
-    height: 1px;
-    background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
-    margin: 40px 0;
-}
-
-/* Workout Timer Section */
-.workout-timer-section {
-    background-color: #f7fafc;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    margin-bottom: 30px;
-}
-
-.workout-timer-section h2 {
-    color: #2b6cb0;
-    margin-top: 0;
-    margin-bottom: 25px;
-    font-weight: 700;
-}
-
-.timer-settings {
-    display: flex;
+.day-cell {
+    padding: 15px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    display: flex; /* จัดตำแหน่งเนื้อหาตรงกลาง */
     justify-content: center;
-    gap: 30px;
-    margin-bottom: 25px;
-    flex-wrap: wrap;
-}
-
-.setting-group {
-    display: flex;
-    flex-direction: column;
     align-items: center;
+    font-size: 1.1rem;
+    font-weight: 400;
+    min-height: 50px; /* กำหนดความสูงขั้นต่ำเพื่อให้ขนาดเท่ากัน */
 }
 
-.setting-group label {
-    font-size: 1em;
-    color: #4a5568;
-    margin-bottom: 8px;
+.day-cell:hover:not(.empty):not(.today) {
+    background-color: #e6e6e6; /* สีเทาอ่อนเมื่อ hover */
+}
+
+.day-cell.empty {
+    background-color: #f9f9f9; /* สีพื้นหลังสำหรับวันว่าง */
+    cursor: default;
+    border: 1px dashed var(--border-color);
+    opacity: 0.7;
+}
+
+.day-cell.today {
+    background-color: var(--secondary-color); /* สีเหลืองสำหรับวันปัจจุบัน */
+    font-weight: 600;
+    border-color: #e0b000; /* ขอบเข้มขึ้น */
+    box-shadow: 0 2px 5px var(--shadow-color);
+    color: var(--text-color); /* เพื่อให้สีดำชัดเจนบนเหลือง */
+}
+
+.day-cell.checked {
+    background-color: var(--checked-day-color); /* สีเขียวอ่อนสำหรับวันที่ติ๊กถูก */
+    border-color: var(--primary-color);
     font-weight: 600;
 }
 
-.setting-group input[type="number"] {
-    width: 80px;
-    padding: 8px 10px;
-    border: 1px solid #cbd5e0;
-    border-radius: 8px;
-    font-size: 1.1em;
+.day-cell .checkmark {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: var(--primary-color);
+    font-size: 1.3rem;
+    font-weight: bold;
+    display: none; /* ซ่อนไว้ */
+}
+
+.day-cell.checked .checkmark {
+    display: block; /* แสดงเมื่อมีการติ๊กถูก */
+}
+
+.summary {
     text-align: center;
-    -moz-appearance: textfield; /* ซ่อนลูกศรใน Firefox */
-}
-/* ซ่อนลูกศรใน Chrome, Safari, Edge */
-.setting-group input[type="number"]::-webkit-outer-spin-button,
-.setting-group input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
-
-.timer-display {
-    font-size: 4.5em; /* ขนาดใหญ่สำหรับเวลา */
-    font-weight: 700;
-    color: #e53e3e; /* สีแดงโดดเด่น */
-    margin-bottom: 15px;
-    font-variant-numeric: tabular-nums; /* ทำให้ตัวเลขกว้างเท่ากัน */
-    line-height: 1; /* ปรับ line-height ให้กระชับ */
-}
-
-.set-count-display {
-    font-size: 1.5em;
+    margin-top: 30px;
+    font-size: 1.2rem;
     font-weight: 600;
-    color: #2b6cb0;
-    margin-bottom: 25px;
+    color: var(--text-color);
+}
+
+.summary span {
+    color: var(--primary-color);
+    font-size: 1.4rem;
+}
+
+/* --- Timer Section Styles --- */
+#timerSection {
+    text-align: center;
 }
 
 .timer-controls {
+    margin-bottom: 30px;
     display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.timer-controls label {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.timer-controls input[type="number"] {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    width: 150px;
+    text-align: center;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.timer-controls input[type="number"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3); /* แสงสีเขียวเมื่อโฟกัส */
+}
+
+.button-group {
+    margin-top: 25px;
+    display: flex;
+    gap: 15px; /* ช่องว่างระหว่างปุ่ม */
     justify-content: center;
-    gap: 15px;
-    flex-wrap: wrap;
+    flex-wrap: wrap; /* ทำให้ปุ่มลงบรรทัดใหม่เมื่อหน้าจอเล็ก */
 }
 
-.timer-btn {
+.button-group button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
     padding: 12px 25px;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1.1em;
-    font-weight: 700;
-    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-.timer-btn:disabled {
-    background-color: #e2e8f0;
-    color: #a0aec0;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
-}
-
-.timer-btn.primary {
-    background-color: #48bb78; /* เขียว */
-    color: white;
-}
-.timer-btn.primary:not(:disabled):hover {
-    background-color: #38a169;
-    transform: translateY(-2px);
-}
-
-.timer-btn.warning {
-    background-color: #ecc94b; /* เหลืองส้ม */
-    color: #333;
-}
-.timer-btn.warning:not(:disabled):hover {
-    background-color: #d69e2e;
-    transform: translateY(-2px);
-}
-
-.timer-btn.secondary {
-    background-color: #a0aec0; /* เทา */
-    color: white;
-}
-.timer-btn.secondary:not(:disabled):hover {
-    background-color: #718096;
-    transform: translateY(-2px);
-}
-
-.timer-btn.danger {
-    background-color: #e53e3e; /* แดง */
-    color: white;
-}
-.timer-btn.danger:not(:disabled):hover {
-    background-color: #c53030;
-    transform: translateY(-2px);
-}
-
-/* Make sure the main reset button is also styled */
-#resetAllButton {
-    background-color: #d39e00; /* สีเหลืองส้ม */
-    color: white;
-    border: none;
-    padding: 10px 20px;
     border-radius: 8px;
     cursor: pointer;
-    font-size: 1em;
-    margin-top: 30px; /* เพิ่มระยะห่าง */
-    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-size: 1.1rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    min-width: 120px;
 }
 
-#resetAllButton:hover {
-    background-color: #b8860b;
-    transform: translateY(-2px);
-}
-#resetAllButton:active {
-    transform: translateY(0);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+.button-group button:hover:not(:disabled) {
+    background-color: #388E3C; /* สีเขียวเข้มขึ้นเมื่อ hover */
+    transform: translateY(-2px); /* ปุ่มขยับขึ้นเล็กน้อย */
 }
 
+.button-group button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    opacity: 0.7;
+    transform: none; /* ไม่ให้ขยับเมื่อ disabled */
+}
 
-/* Responsive Design - Adjustments for timer section */
+.timer-display {
+    background-color: var(--light-green); /* พื้นหลังเขียวอ่อน */
+    padding: 30px;
+    border-radius: 10px;
+    margin-top: 30px;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.05); /* เงาด้านในเล็กน้อย */
+}
+
+.timer-display p {
+    margin: 10px 0;
+    font-size: 1.4rem;
+    color: var(--text-color);
+}
+
+.timer-display span {
+    font-size: 3.5rem; /* ขนาดใหญ่สำหรับตัวเลขเวลา */
+    font-weight: 600;
+    color: var(--primary-color);
+    display: block; /* ทำให้ขึ้นบรรทัดใหม่ */
+    margin-top: 5px;
+}
+
+.timer-display p:last-child span {
+    font-size: 2.5rem; /* ขนาดเล็กลงหน่อยสำหรับเซ็ต */
+}
+
+/* Responsive Adjustments for smaller screens */
 @media (max-width: 768px) {
-    .workout-timer-section {
-        padding: 20px;
+    header {
+        padding: 0.8rem 1rem;
     }
-    .timer-display {
-        font-size: 3.5em;
+    h1 {
+        font-size: 1.5rem;
     }
-    .set-count-display {
-        font-size: 1.2em;
+    .menu-icon {
+        font-size: 1.8rem;
     }
-    .timer-btn {
-        padding: 10px 20px;
-        font-size: 1em;
+    nav {
+        right: 1rem;
+        min-width: unset;
+        width: calc(100% - 2rem); /* กว้างเต็มหน้าจอ (มีขอบ) */
+        border-radius: 5px; /* ลดขอบมนลง */
     }
-    .timer-settings {
-        gap: 20px;
+    main {
+        margin: 10px auto;
+        padding: 15px;
+    }
+    section h2 {
+        font-size: 1.4rem;
+        margin-bottom: 20px;
+    }
+    .calendar-nav button {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+    .day-header, .day-cell {
+        padding: 10px 0;
+        font-size: 0.9rem;
+        min-height: 45px; /* ปรับลดความสูง */
+    }
+    .timer-display span {
+        font-size: 2.8rem;
+    }
+    .timer-display p:last-child span {
+        font-size: 2rem;
+    }
+    .button-group {
+        flex-direction: column; /* ปุ่มเรียงกันในแนวตั้ง */
+        gap: 10px;
+    }
+    .button-group button {
+        width: 100%;
+        max-width: 250px; /* จำกัดความกว้างของปุ่มบนมือถือ */
     }
 }
 
 @media (max-width: 480px) {
-    .timer-display {
-        font-size: 2.8em;
+    header h1 {
+        font-size: 1.3rem;
     }
-    .timer-controls {
-        flex-direction: column; /* ปุ่มเรียงลงมาในจอเล็กมาก */
-        gap: 10px;
+    .menu-icon {
+        font-size: 1.6rem;
+    }
+    nav ul li a {
+        padding: 10px 15px;
+        font-size: 0.9rem;
+    }
+    main {
+        padding: 10px;
+    }
+    section h2 {
+        font-size: 1.2rem;
+    }
+    .timer-controls input[type="number"] {
+        width: 120px;
+        font-size: 1rem;
     }
 }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>ระบบออกกำลังกายส่วนตัว</h1>
+        <div class="menu-icon" onclick="toggleMenu()">
+            &#9776; </div>
+        <nav id="mainMenu">
+            <ul>
+                <li><a href="#" onclick="showSection('calendarSection')">ปฏิทินออกกำลังกาย</a></li>
+                <li><a href="#" onclick="showSection('timerSection')">ตัวจับเวลา</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="calendarSection" class="active">
+            <h2>ปฏิทินการออกกำลังกาย</h2>
+            <div class="calendar-nav">
+                <button onclick="changeMonth(-1)">&#9664; ก่อนหน้า</button>
+                <h3 id="currentMonthYear"></h3>
+                <button onclick="changeMonth(1)">ถัดไป &#9654;</button>
+            </div>
+            <div id="calendar-grid"></div>
+            <p class="summary">รวมวันที่ออกกำลังกายไปแล้ว: <span id="totalWorkoutDays">0</span> วัน</p>
+        </section>
+
+        <section id="timerSection" class="hidden">
+            <h2>ตัวจับเวลาการออกกำลังกาย</h2>
+            <div class="timer-controls">
+                <label for="setDuration">เวลาต่อเซ็ต (วินาที):</label>
+                <input type="number" id="setDuration" value="60" min="1">
+                <label for="totalSets">จำนวนเซ็ตทั้งหมด:</label>
+                <input type="number" id="totalSets" value="3" min="1">
+                <div class="button-group">
+                    <button id="startButton">เริ่ม</button>
+                    <button id="pauseButton" disabled>หยุดชั่วคราว</button>
+                    <button id="resetTimerButton" disabled>รีเซ็ต</button>
+                </div>
+            </div>
+            <div class="timer-display">
+                <p>เวลาปัจจุบัน: <span id="currentTime">00</span></p>
+                <p>เซ็ตที่: <span id="currentSet">0</span> / <span id="displayTotalSets">0</span></p>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- ส่วนควบคุมการแสดงผลส่วนต่างๆ (เมนูและ Section) ---
+        let currentVisibleSection = 'calendarSection'; // ตั้งค่าส่วนที่แสดงอยู่ปัจจุบัน
+
+        function toggleMenu() {
+            const menu = document.getElementById('mainMenu');
+            menu.classList.toggle('active');
+        }
+
+        function showSection(sectionId) {
+            // ซ่อน Section ที่กำลังแสดงอยู่
+            if (currentVisibleSection) {
+                document.getElementById(currentVisibleSection).classList.remove('active');
+                document.getElementById(currentVisibleSection).classList.add('hidden');
+            }
+
+            // แสดง Section ที่ต้องการ
+            const newSection = document.getElementById(sectionId);
+            newSection.classList.remove('hidden');
+            newSection.classList.add('active');
+            currentVisibleSection = sectionId; // อัปเดต Section ที่กำลังแสดง
+
+            // ปิดเมนูหลังจากเลือก
+            toggleMenu();
+
+            // หากเป็นส่วนปฏิทิน ให้ render ใหม่
+            if (sectionId === 'calendarSection') {
+                renderCalendar();
+            } else if (sectionId === 'timerSection') {
+                resetTimer(); // รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer
+            }
+        }
+
+        // --- ส่วนปฏิทิน ---
+        const calendarGridEl = document.getElementById('calendar-grid');
+        const currentMonthYearEl = document.getElementById('currentMonthYear');
+        const totalWorkoutDaysEl = document.getElementById('totalWorkoutDays');
+
+        let currentCalendarDate = new Date(); // วันที่ปัจจุบันของปฏิทินที่แสดงอยู่
+        let workoutDays = JSON.parse(localStorage.getItem('workoutDays')) || {}; // เก็บวันที่ออกกำลังกายไว้ใน localStorage
+
+        function renderCalendar() {
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth(); // 0-11
+            
+            // ตั้งชื่อเดือนเป็นภาษาไทย
+            const monthNames = [
+                "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
+                "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
+            ];
+            currentMonthYearEl.textContent = `${monthNames[month]} ${year}`;
+
+            // หาข้อมูลวันในเดือน
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+            const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = อาทิตย์, 1 = จันทร์...
+
+            let html = `
+                <div class="day-header">อา</div>
+                <div class="day-header">จ</div>
+                <div class="day-header">อ</div>
+                <div class="day-header">พ</div>
+                <div class="day-header">พฤ</div>
+                <div class="day-header">ศ</div>
+                <div class="day-header">ส</div>
+            `;
+
+            // เพิ่มช่องว่างสำหรับวันก่อนหน้าวันที่ 1 ของเดือน
+            for (let i = 0; i < startDayOfWeek; i++) {
+                html += `<div class="day-cell empty"></div>`;
+            }
+
+            // เพิ่มวันในปฏิทิน
+            let totalCheckedDays = 0;
+            const today = new Date();
+            const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`; // รูปแบบYYYY-M-D ของวันปัจจุบัน
+
+            for (let i = 1; i <= lastDayOfMonth; i++) {
+                const dateString = `${year}-${month + 1}-${i}`; // รูปแบบYYYY-M-D สำหรับแต่ละวันในปฏิทิน
+                let classes = 'day-cell';
+
+                // ไฮไลต์วันปัจจุบัน
+                if (dateString === todayString) {
+                    classes += ' today';
+                }
+
+                // ตรวจสอบว่าวันนี้มีการติ๊กถูกหรือไม่
+                if (workoutDays[dateString]) {
+                    classes += ' checked';
+                    totalCheckedDays++;
+                }
+
+                html += `
+                    <div class="${classes}" data-date="${dateString}">
+                        ${i}
+                        <span class="checkmark">&#10003;</span>
+                    </div>
+                `;
+            }
+            calendarGridEl.innerHTML = html;
+            totalWorkoutDaysEl.textContent = totalCheckedDays;
+
+            // เพิ่ม Event Listener ให้แต่ละวัน (ไม่ใช่วันว่าง)
+            document.querySelectorAll('#calendar-grid .day-cell:not(.empty)').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    const date = this.dataset.date;
+                    if (workoutDays[date]) {
+                        delete workoutDays[date]; // ยกเลิกติ๊กถูก
+                    } else {
+                        workoutDays[date] = true; // ติ๊กถูก
+                    }
+                    localStorage.setItem('workoutDays', JSON.stringify(workoutDays)); // บันทึกข้อมูล
+                    renderCalendar(); // อัปเดตปฏิทิน
+                });
+            });
+        }
+
+        // ฟังก์ชันเปลี่ยนเดือนในปฏิทิน
+        function changeMonth(delta) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
+            renderCalendar();
+        }
+
+        // --- ส่วนตัวจับเวลา ---
+        const setDurationInput = document.getElementById('setDuration');
+        const totalSetsInput = document.getElementById('totalSets');
+        const startButton = document.getElementById('startButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resetTimerButton = document.getElementById('resetTimerButton');
+        const currentTimeEl = document.getElementById('currentTime');
+        const currentSetEl = document.getElementById('currentSet');
+        const displayTotalSetsEl = document.getElementById('displayTotalSets');
+
+        let timerInterval;
+        let initialSetDuration;     // เก็บเวลาเริ่มต้นของแต่ละเซ็ต
+        let remainingTime;          // เวลาที่เหลือในเซ็ตปัจจุบัน
+        let currentSetCount;        // จำนวนเซ็ตที่กำลังทำอยู่ (1, 2, 3...)
+        let totalSetsToComplete;    // จำนวนเซ็ตทั้งหมดที่ผู้ใช้กำหนด
+        let timerActive = false;    // สถานะว่าตัวจับเวลากำลังทำงานอยู่หรือไม่
+        let isPaused = false;       // สถานะว่าตัวจับเวลาถูกหยุดชั่วคราวหรือไม่
+
+        function updateTimerDisplay() {
+            currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
+            currentSetEl.textContent = currentSetCount;
+            displayTotalSetsEl.textContent = totalSetsToComplete;
+        }
+
+        function startTimer() {
+            if (timerActive) return; // ป้องกันการกดเริ่มซ้ำขณะทำงาน
+
+            // กำหนดค่าเริ่มต้นเมื่อเริ่มครั้งแรก
+            if (currentSetCount === 0) {
+                initialSetDuration = parseInt(setDurationInput.value);
+                totalSetsToComplete = parseInt(totalSetsInput.value);
+
+                if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
+                    isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
+                    alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
+                    return;
+                }
+                currentSetCount = 1; // เริ่มต้นที่เซ็ต 1
+                remainingTime = initialSetDuration;
+            } else if (!isPaused) { // หากไม่ได้ถูกหยุดชั่วคราวแต่กด Start แสดงว่ากำลังเริ่มเซ็ตใหม่หลังจบเซ็ตก่อนหน้า
+                remainingTime = initialSetDuration;
+            }
+            
+            timerActive = true;
+            isPaused = false;
+
+            // ตั้งค่าสถานะปุ่มและ input
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            resetTimerButton.disabled = true; // ปุ่ม Reset หลักปิดไว้จนกว่าจะครบทุกเซ็ตหรือกด Pause
+
+            setDurationInput.disabled = true;
+            totalSetsInput.disabled = true;
+
+            updateTimerDisplay(); // อัปเดตการแสดงผลทันที
+
+            timerInterval = setInterval(() => {
+                remainingTime--;
+                updateTimerDisplay();
+
+                if (remainingTime <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null; // เคลียร์ interval
+                    timerActive = false; // ตัวจับเวลาหยุดชั่วคราว
+
+                    // เล่นเสียงแจ้งเตือน (สามารถเพิ่มได้ถ้าต้องการ)
+                    // const audio = new Audio('path/to/your/sound.mp3');
+                    // audio.play();
+                    
+                    alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
+                    
+                    if (currentSetCount < totalSetsToComplete) {
+                        // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เตรียมพร้อมสำหรับเซ็ตถัดไป
+                        currentSetCount++;
+                        remainingTime = initialSetDuration; 
+                        updateTimerDisplay(); // อัปเดต UI ก่อนเริ่มเซ็ตใหม่
+                        
+                        startButton.disabled = false; // เปิดปุ่ม Start เพื่อเริ่มเซ็ตถัดไป
+                        pauseButton.disabled = true; // ปิด Pause
+                        resetTimerButton.disabled = false; // เปิดปุ่ม Reset ให้กดได้
+                    } else {
+                        // ครบทุกเซ็ตแล้ว
+                        alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
+                        resetTimerButton.disabled = false; // เปิดปุ่ม Reset หลัก
+                        startButton.disabled = true; // ปิดปุ่ม Start
+                        pauseButton.disabled = true; // ปิดปุ่ม Pause
+                    }
+                }
+            }, 1000); // ทุก 1 วินาที
+        }
+
+        function pauseTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                timerActive = false;
+                isPaused = true;
+                
+                startButton.disabled = false; // ให้กดเริ่มต่อได้
+                pauseButton.disabled = true;
+                resetTimerButton.disabled = false; // อนุญาตให้ Reset ได้ตลอดเวลาที่หยุด
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            timerActive = false;
+            isPaused = false;
+            
+            remainingTime = 0;
+            currentSetCount = 0;
+            initialSetDuration = 0; // รีเซ็ตค่านี้ด้วย
+            totalSetsToComplete = 0; // รีเซ็ตจำนวนเซ็ตทั้งหมด
+
+            // รีเซ็ตปุ่มและ input
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            resetTimerButton.disabled = true;
+            setDurationInput.disabled = false;
+            totalSetsInput.disabled = false;
+
+            // ตั้งค่า Input เป็นค่าเริ่มต้น
+            setDurationInput.value = 60;
+            totalSetsInput.value = 3;
+
+            updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็น 00 และ 0/0
+        }
+
+        // Event Listeners สำหรับปุ่ม Timer
+        startButton.addEventListener('click', startTimer);
+        pauseButton.addEventListener('click', pauseTimer);
+        resetTimerButton.addEventListener('click', resetTimer);
+
+        // เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
+            renderCalendar(); // Render ปฏิทินครั้งแรก
+            resetTimer(); // รีเซ็ต Timer เพื่อตั้งค่าเริ่มต้นทั้งหมด
+        });
+    </script>
+</body>
+</html>
