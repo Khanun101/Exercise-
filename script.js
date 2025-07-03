@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let targetSets = 3; // จำนวนเซ็ตเป้าหมาย
 
     // --- Notification State ---
-    // ตัวแปรเพื่อติดตามว่าเคยพยายามขออนุญาตแจ้งเตือนไปแล้วหรือไม่
     let notificationPermissionRequested = false; 
 
     // --- Helper Functions ---
@@ -62,23 +61,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Calendar Rendering ---
     function renderCalendar() {
-        calendarGrid.innerHTML = ''; // ล้าง grid เดิม
+        calendarGrid.innerHTML = '';
         currentMonthYearHeader.textContent = `${monthNames[currentMonth]} ${currentYear}`;
 
         const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-        // firstDayOfMonth.getDay() ให้ 0=อาทิตย์, 1=จันทร์...
-        const startDayIndex = firstDayOfMonth.getDay(); // วันแรกของเดือนคือวันอะไรในสัปดาห์ (0=อาทิตย์, 6=เสาร์)
+        const startDayIndex = firstDayOfMonth.getDay();
 
-        // เพิ่มวันจากเดือนก่อนหน้า (placeholder)
-        // เพื่อให้วันแรกของเดือนเริ่มต้นถูกตำแหน่งที่ถูกต้องใน grid
         for (let i = 0; i < startDayIndex; i++) {
             const emptyDay = document.createElement('div');
             emptyDay.classList.add('calendar-day', 'other-month');
             calendarGrid.appendChild(emptyDay);
         }
 
-        // เพิ่มวันในเดือนปัจจุบัน
         for (let day = 1; day <= daysInMonth; day++) {
             const dayElement = document.createElement('div');
             dayElement.classList.add('calendar-day');
@@ -86,25 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const fullDate = new Date(currentYear, currentMonth, day);
             const formattedDate = formatDate(fullDate);
-            dayElement.dataset.date = formattedDate; // เก็บวันที่เต็มรูปแบบใน dataset
+            dayElement.dataset.date = formattedDate;
 
-            // ตรวจสอบว่าวันนี้คือวันปัจจุบันหรือไม่
             if (formattedDate === todayFormatted) {
                 dayElement.classList.add('current-day');
             }
 
-            // ตรวจสอบว่าวันนี้เคยออกกำลังกายหรือไม่
             if (allWorkoutDates.has(formattedDate)) {
                 dayElement.classList.add('is-workout');
             }
 
-            // เพิ่ม Event Listener สำหรับการคลิก
             dayElement.addEventListener('click', () => {
                 dayElement.classList.toggle('is-workout');
                 if (dayElement.classList.contains('is-workout')) {
-                    allWorkoutDates.add(formattedDate); // เพิ่มวันที่จริงลงใน Set
+                    allWorkoutDates.add(formattedDate);
                 } else {
-                    allWorkoutDates.delete(formattedDate); // ลบวันที่จริงออกจาก Set
+                    allWorkoutDates.delete(formattedDate);
                 }
                 saveWorkoutDates();
                 updateWorkoutCounts();
@@ -113,16 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
             calendarGrid.appendChild(dayElement);
         }
 
-        // เพิ่มวันจากเดือนถัดไป (placeholder) เพื่อให้ grid เต็ม
         const totalDaysInGrid = startDayIndex + daysInMonth;
-        const remainingCells = 42 - totalDaysInGrid; // 42 cells = 6 rows * 7 days (typical max for calendar)
-        for (let i = 0; i < remainingCells && i < 7; i++) { // เพิ่มไม่เกิน 7 วันถัดไป (สำหรับกรณีที่เดือนสั้นและเริ่มกลางสัปดาห์)
+        const remainingCells = 42 - totalDaysInGrid;
+        for (let i = 0; i < remainingCells && i < 7; i++) {
              const emptyDay = document.createElement('div');
              emptyDay.classList.add('calendar-day', 'other-month');
              calendarGrid.appendChild(emptyDay);
         }
 
-        updateWorkoutCounts(); // อัปเดตตัวนับหลังจาก render ปฏิทิน
+        updateWorkoutCounts();
     }
 
     // --- Local Storage Management for Calendar ---
@@ -139,14 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Update Display Counts (Calendar) ---
     function updateWorkoutCounts() {
-        // 1. นับจำนวนวันของเดือนปัจจุบันที่แสดงผล
         let currentMonthCount = 0;
         const startOfMonth = new Date(currentYear, currentMonth, 1);
         const endOfMonth = new Date(currentYear, currentMonth + 1, 0);
 
         allWorkoutDates.forEach(dateStr => {
             const date = new Date(dateStr);
-            // เพื่อให้การเปรียบเทียบวันที่ทำงานถูกต้อง ควรตั้งเวลาเป็นเที่ยงคืนสำหรับทุกวันที่นำมาเปรียบเทียบ
             date.setHours(0,0,0,0);
             startOfMonth.setHours(0,0,0,0);
             endOfMonth.setHours(0,0,0,0);
@@ -156,18 +145,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. นับยอดรวมทั้งหมด
         const totalCumulativeCount = allWorkoutDates.size;
 
-        // อัปเดต UI พร้อม Animation
-        // สำหรับเดือนปัจจุบัน
         currentMonthWorkoutDaysSpan.classList.add('count-pulse');
         currentMonthWorkoutDaysSpan.textContent = currentMonthCount;
         currentMonthWorkoutDaysSpan.addEventListener('animationend', () => {
             currentMonthWorkoutDaysSpan.classList.remove('count-pulse');
         }, { once: true });
 
-        // สำหรับยอดรวมทั้งหมด
         totalCumulativeWorkoutDaysSpan.classList.add('count-pulse');
         totalCumulativeWorkoutDaysSpan.textContent = totalCumulativeCount;
         totalCumulativeWorkoutDaysSpan.addEventListener('animationend', () => {
@@ -177,13 +162,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Notification Logic ---
     function requestNotificationPermission() {
-        // ตรวจสอบว่าเบราว์เซอร์รองรับ Notifications หรือไม่
         if (!("Notification" in window)) {
             console.warn("This browser does not support desktop notification.");
             return;
         }
 
-        // ถ้ายังไม่ได้ขออนุญาต ให้ขอเลย
         if (Notification.permission === "default" && !notificationPermissionRequested) {
             Notification.requestPermission().then(permission => {
                 if (permission === "granted") {
@@ -191,18 +174,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     console.warn("Notification permission denied.");
                 }
-                notificationPermissionRequested = true; // บันทึกว่าได้ขอไปแล้ว
+                notificationPermissionRequested = true;
             });
         }
     }
 
     function showTimerNotification(message) {
-        // ตรวจสอบว่าได้รับอนุญาตให้แสดงแจ้งเตือนหรือไม่
         if (Notification.permission === "granted") {
             new Notification("Workout Timer", {
                 body: message,
-                icon: 'https://cdn-icons-png.flaticon.com/512/1146/1146816.png' // ไอคอนสำหรับการแจ้งเตือน
-                // คุณสามารถเปลี่ยนเป็น URL ของรูปไอคอนของคุณเอง หรือใช้ path ในเครื่อง เช่น './images/workout_icon.png'
+                icon: 'https://cdn-icons-png.flaticon.com/512/1146/1146816.png'
             });
         } else {
             console.log("Cannot show notification: permission not granted.");
@@ -218,36 +199,32 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSetsCountSpan.textContent = completedSets;
         displayTargetSetsSpan.textContent = targetSets;
 
-        // เปิด/ปิดปุ่มรีเซ็ตเซ็ต
-        if (completedSets > 0 || (completedSets === targetSets && targetSets > 0)) { // หากทำได้มากกว่า 0 เซ็ต หรือครบเป้าหมายแล้ว ให้เปิดปุ่ม
+        if (completedSets > 0 || (completedSets === targetSets && targetSets > 0)) {
             resetSetsBtn.disabled = false;
         } else {
             resetSetsBtn.disabled = true;
         }
 
-        // ถ้าทำครบเซ็ตเป้าหมายแล้ว ให้หยุดเวลาและ disable ปุ่มเริ่ม
         if (completedSets >= targetSets && targetSets > 0) {
-            stopTimer(); // หยุดเวลา
+            stopTimer();
             startTimerBtn.disabled = true;
-            timerDisplay.textContent = "DONE!"; // แสดงข้อความทำเสร็จ
-            // ไม่ต้องแจ้งเตือนซ้ำตรงนี้ เพราะจะแจ้งเตือนตอนที่ทำเซ็ตสุดท้ายครบแล้วใน startTimer
+            timerDisplay.textContent = "DONE!";
+            // แจ้งเตือนเมื่อครบทุกเซ็ต จะถูกเรียกใน startTimer() เมื่อเซ็ตสุดท้ายเสร็จ
         } else {
-            startTimerBtn.disabled = false; // ถ้ายังไม่ครบ ให้เปิดปุ่มเริ่มได้
+            startTimerBtn.disabled = false;
         }
     }
 
     function startTimer() {
-        // ขออนุญาตแจ้งเตือนเมื่อเริ่มจับเวลาครั้งแรกในเซสชัน
         requestNotificationPermission();
 
-        // ตรวจสอบว่าต้องตั้งเวลาเริ่มต้นใหม่หรือไม่
-        if (remainingTime <= 0 && completedSets < targetSets) {
+        // ถ้าเวลาหมด หรือเพิ่งเริ่มต้น ให้รีเซ็ตเวลาสำหรับเซ็ตใหม่
+        if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") { // เพิ่มเงื่อนไข DONE!
             remainingTime = initialTimerDuration;
         }
         
-        if (timerInterval) clearInterval(timerInterval); // เคลียร์ interval เก่าถ้ามี
+        if (timerInterval) clearInterval(timerInterval);
 
-        // Disable ปุ่ม Start และ Enable ปุ่ม Stop/Reset
         startTimerBtn.disabled = true;
         stopTimerBtn.disabled = false;
         resetTimerBtn.disabled = false;
@@ -256,24 +233,35 @@ document.addEventListener('DOMContentLoaded', () => {
             if (remainingTime > 0) {
                 remainingTime--;
                 updateTimerDisplay();
-            } else { // Time's up for current set!
-                clearInterval(timerInterval); // หยุดจับเวลา
-                timerSound.play(); // เล่นเสียงเมื่อเวลาหมด
+            } else { // เวลาของเซ็ตปัจจุบันหมดแล้ว!
+                clearInterval(timerInterval);
+                timerSound.play();
 
                 if (completedSets < targetSets) {
                     completedSets++; // นับ 1 เซ็ต
-                    saveTimerState(); // บันทึกสถานะเซ็ต
+                    saveTimerState();
                     showTimerNotification(`Set ${completedSets} completed!`); // แจ้งเตือนเมื่อแต่ละเซ็ตเสร็จสิ้น
+
+                    // ตรวจสอบว่าครบเซ็ตเป้าหมายแล้วหรือไม่
+                    if (completedSets >= targetSets) {
+                        // ถ้าครบแล้ว ไม่ต้องรีเซ็ตเวลาอัตโนมัติ
+                        timerDisplay.textContent = "DONE!";
+                        showTimerNotification(`Congratulations! All ${targetSets} sets completed!`); // แจ้งเตือนเมื่อครบทุกเซ็ต
+                        stopTimer(); // หยุดเวลา
+                        startTimerBtn.disabled = true; // ปิดปุ่มเริ่ม
+                    } else {
+                        // ถ้ายังไม่ครบ ให้รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
+                        remainingTime = initialTimerDuration;
+                        updateTimerDisplay();
+                        startTimerBtn.disabled = false; // เปิดปุ่มเริ่มสำหรับเซ็ตถัดไป
+                    }
                 }
                 updateSetDisplay(); // อัปเดตการแสดงผลเซ็ต
 
-                // เมื่อเวลาหมด ให้หยุด และพร้อมให้เริ่มเซ็ตต่อไป หรือเสร็จสิ้น
                 stopTimerBtn.disabled = true; // หยุดแล้ว ให้ปุ่มหยุด disabled
                 resetTimerBtn.disabled = false; // สามารถรีเซ็ตเวลาได้
-                // startTimerBtn.disabled จะถูกจัดการใน updateSetDisplay
-                updateTimerDisplay(); // เพื่อแสดง 00:00 หรือ DONE!
             }
-        }, 1000); // ทุก 1 วินาที
+        }, 1000);
     }
 
     function stopTimer() {
@@ -288,8 +276,8 @@ document.addEventListener('DOMContentLoaded', () => {
         remainingTime = initialTimerDuration;
         updateTimerDisplay();
         startTimerBtn.disabled = false;
-        stopTimerBtn.disabled = true; // หยุดไปแล้ว ปุ่ม Stop ควร disabled
-        resetTimerBtn.disabled = false; // รีเซ็ตไปแล้ว ปุ่มรีเซ็ตก็ยังอยู่
+        stopTimerBtn.disabled = true;
+        resetTimerBtn.disabled = false;
     }
 
     function resetSets() {
@@ -320,18 +308,21 @@ document.addEventListener('DOMContentLoaded', () => {
             completedSets = parsedState.completedSets || 0;
         }
 
-        // อัปเดตค่าใน input fields
         timerDurationInput.value = initialTimerDuration;
         targetSetsInput.value = targetSets;
 
-        // อัปเดต UI เริ่มต้น
-        remainingTime = initialTimerDuration; // ตั้งเวลาเริ่มต้นให้ตรงกับค่าที่โหลดมา
+        // ตั้งเวลาที่เหลือให้เป็นค่าเริ่มต้นของเซ็ตปัจจุบัน หรือเป็น 0 ถ้าครบแล้ว
+        if (completedSets >= targetSets && targetSets > 0) {
+            remainingTime = 0; // แสดง DONE!
+        } else {
+            remainingTime = initialTimerDuration;
+        }
+        
         updateTimerDisplay();
-        updateSetDisplay(); // ต้องเรียกเพื่อตั้งค่าปุ่ม disabled ให้ถูกต้อง
+        updateSetDisplay();
     }
 
     // --- Event Listeners ---
-    // Calendar Navigation
     prevMonthBtn.addEventListener('click', () => {
         currentMonth--;
         if (currentMonth < 0) {
@@ -350,18 +341,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCalendar();
     });
 
-    // Timer Controls
     timerDurationInput.addEventListener('change', () => {
         const newDuration = parseInt(timerDurationInput.value);
         if (newDuration > 0) {
             initialTimerDuration = newDuration;
-            if (!timerInterval) { // ถ้า Timer ไม่ได้กำลังทำงาน ให้รีเซ็ตเวลาที่แสดงผล
+            // ถ้า Timer ไม่ได้กำลังทำงาน หรือเวลาหมด ให้รีเซ็ตเวลาที่แสดงผล
+            if (!timerInterval || remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
                 remainingTime = initialTimerDuration;
                 updateTimerDisplay();
             }
             saveTimerState();
         } else {
-            timerDurationInput.value = initialTimerDuration; // ถ้าค่าไม่ถูกต้อง ให้กลับไปใช้ค่าเดิม
+            timerDurationInput.value = initialTimerDuration;
         }
     });
 
@@ -369,14 +360,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const newTargetSets = parseInt(targetSetsInput.value);
         if (newTargetSets > 0) {
             targetSets = newTargetSets;
-            // ถ้าเซ็ตที่ทำไปแล้วเกินเป้าหมายใหม่ ให้ปรับให้เท่ากับเป้าหมาย
             if (completedSets > targetSets) {
                 completedSets = targetSets;
             }
             saveTimerState();
             updateSetDisplay();
         } else {
-            targetSetsInput.value = targetSets; // ถ้าค่าไม่ถูกต้อง ให้กลับไปใช้ค่าเดิม
+            targetSetsInput.value = targetSets;
         }
     });
 
@@ -385,27 +375,24 @@ document.addEventListener('DOMContentLoaded', () => {
     resetTimerBtn.addEventListener('click', resetTimer);
     resetSetsBtn.addEventListener('click', resetSets);
 
-    // Global Reset Button
     resetAllButton.addEventListener('click', () => {
         if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตข้อมูลทั้งหมด? ทั้งปฏิทินและตัวจับเวลาจะถูกรีเซ็ตและหายไปอย่างถาวร')) {
-            // Reset Calendar Data
             localStorage.removeItem('workoutCalendarDates');
             allWorkoutDates.clear();
-            renderCalendar(); // Rerender calendar to clear UI
+            renderCalendar();
 
-            // Reset Timer Data
             localStorage.removeItem('workoutTimerState');
             initialTimerDuration = 60;
             targetSets = 3;
             completedSets = 0;
-            resetTimer(); // Reset timer to initial state
-            updateSetDisplay(); // Update set count display
+            resetTimer();
+            updateSetDisplay();
         }
     });
 
     // --- Initialization ---
-    loadWorkoutDates(); // โหลดข้อมูลปฏิทิน
-    renderCalendar(); // แสดงปฏิทินเริ่มต้น
+    loadWorkoutDates();
+    renderCalendar();
 
-    loadTimerState(); // โหลดข้อมูลตัวจับเวลา
+    loadTimerState();
 });
