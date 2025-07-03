@@ -1,401 +1,310 @@
-/* General Body and Font Styles */
+/* General Body Styles */
 body {
-    font-family: 'Kanit', sans-serif; /* Use Kanit font as specified */
+    font-family: 'Arial', sans-serif;
     margin: 0;
-    padding: 0;
-    background-color: #f4f4f4;
+    padding: 20px;
+    background-color: #f4f7f6; /* สีพื้นหลังอ่อนๆ */
     color: #333;
-    line-height: 1.6;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start; /* เริ่มจากด้านบน */
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 900px; /* จำกัดความกว้างสูงสุด */
+    padding: 30px;
+    box-sizing: border-box;
 }
 
 /* Header Styles */
 header {
-    background-color: #4CAF50; /* Green header */
-    color: white;
-    padding: 1rem 1.5rem;
-    text-align: center;
-    position: relative; /* For positioning menu icon */
-    display: flex; /* Use flexbox for layout */
-    justify-content: space-between; /* Space out title and menu */
-    align-items: center; /* Vertically align items */
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
 }
 
 header h1 {
     margin: 0;
-    font-size: 1.8rem;
+    color: #2c3e50;
+    font-size: 1.8em;
 }
 
-/* Menu Icon (Hamburger) Styles */
-.menu-icon {
-    font-size: 2rem;
+.hamburger-menu {
+    font-size: 2em;
     cursor: pointer;
-    padding: 0 10px;
-    display: block; /* Always show hamburger icon for mobile-first approach */
-    z-index: 1001; /* Ensure it's above other content */
+    color: #555;
 }
 
-/* Main Navigation Menu Styles */
-#mainMenu {
-    display: none; /* Hidden by default for mobile */
-    position: absolute;
-    top: 100%; /* Position below header */
-    right: 0;
-    background-color: #5cb85c; /* Slightly darker green for menu */
-    width: 100%;
-    max-width: 250px; /* Max width for menu on larger screens */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out; /* Animation for menu */
-    transform: translateX(100%); /* Start off-screen to the right */
-    opacity: 0;
-}
-
-#mainMenu.active {
-    display: block; /* Show menu when active */
-    transform: translateX(0); /* Slide into view */
-    opacity: 1;
-}
-
-#mainMenu ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-#mainMenu ul li a {
-    display: block;
-    padding: 1rem 1.5rem;
-    color: white;
-    text-decoration: none;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    transition: background-color 0.2s ease;
-}
-
-#mainMenu ul li:last-child a {
-    border-bottom: none; /* No border for the last item */
-}
-
-#mainMenu ul li a:hover {
-    background-color: #4ca14c; /* Darker green on hover */
-}
-
-/* Main Content Area */
-main {
-    padding: 1rem;
-    max-width: 900px;
-    margin: 20px auto;
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Section Styles */
-section {
-    padding: 20px;
-    border-radius: 5px;
-    margin-bottom: 20px;
-}
-
-section.hidden {
-    display: none; /* For sections that are not active */
-}
-
-section.active {
-    display: block; /* For the currently active section */
-}
-
-/* Calendar Section */
-#calendarSection h2 {
+/* Calendar Section Styles */
+.calendar-section {
+    margin-bottom: 40px;
     text-align: center;
-    color: #4CAF50;
-    margin-top: 0;
 }
 
-.calendar-nav {
+.calendar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 20px;
 }
 
-.calendar-nav button {
-    background-color: #4CAF50;
+.calendar-header h2 {
+    margin: 0;
+    color: #34495e;
+    font-size: 1.5em;
+}
+
+.calendar-header button {
+    background-color: #4CAF50; /* สีเขียว */
     color: white;
     border: none;
-    padding: 0.6rem 1rem;
+    padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.2s ease;
+    font-size: 1.2em;
+    transition: background-color 0.3s ease;
 }
 
-.calendar-nav button:hover {
+.calendar-header button:hover {
     background-color: #45a049;
 }
 
-#currentMonthYear {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #333;
-}
-
-#calendar-grid {
+.calendar-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* 7 columns for days of week */
-    gap: 5px;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
     text-align: center;
-    background-color: #eee;
-    padding: 10px;
-    border-radius: 5px;
 }
 
-.day-header {
-    background-color: #ddd;
-    padding: 8px 0;
+.day-name {
     font-weight: bold;
-    color: #555;
-    border-radius: 3px;
+    color: #777;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 5px;
 }
 
-.day-cell {
-    background-color: white;
-    padding: 10px 5px;
-    border-radius: 5px;
+.calendar-day {
+    padding: 15px 0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
     cursor: pointer;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 50px; /* Ensure a minimum height for cells */
-    transition: background-color 0.2s ease, transform 0.1s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    font-size: 1.1em;
+    font-weight: 500;
+    position: relative; /* สำหรับติ๊กถูก */
 }
 
-.day-cell:hover:not(.empty) {
-    background-color: #e6ffe6; /* Lighter green on hover */
+.calendar-day:hover {
+    background-color: #e0e0e0;
     transform: translateY(-2px);
 }
 
-.day-cell.empty {
-    background-color: #f9f9f9;
-    cursor: default;
-    box-shadow: none;
-}
-
-.day-cell.today {
-    border: 2px solid #4CAF50;
+.calendar-day.current-day {
+    border: 2px solid #3498db; /* สีฟ้าสำหรับวันปัจจุบัน */
     font-weight: bold;
 }
 
-.day-cell.checked {
-    background-color: #d4edda; /* Light green for checked days */
+.calendar-day.selected-day {
+    background-color: #3498db; /* สีฟ้าสำหรับวันที่เลือก */
+    color: white;
 }
 
-.day-cell .checkmark {
+.calendar-day.completed-day {
+    background-color: #2ecc71; /* สีเขียวสำหรับวันที่ออกกำลังกายแล้ว */
+    color: white;
+}
+
+.calendar-day.completed-day::after {
+    content: '✔'; /* ติ๊กถูก */
     position: absolute;
-    bottom: 5px;
+    top: 5px;
     right: 5px;
-    color: #4CAF50;
-    font-size: 1.2rem;
-    font-weight: bold;
-    display: none; /* Hidden by default */
-}
-
-.day-cell.checked .checkmark {
-    display: block; /* Show checkmark when checked */
-}
-
-.summary {
-    text-align: center;
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-    font-weight: bold;
-    color: #555;
-}
-
-#totalWorkoutDays {
-    color: #4CAF50;
-    font-size: 1.2rem;
-}
-
-/* Timer Section */
-#timerSection h2 {
-    text-align: center;
-    color: #4CAF50;
-    margin-top: 0;
-}
-
-.timer-controls {
+    font-size: 0.8em;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
     display: flex;
-    flex-direction: column;
-    gap: 15px;
-    padding: 15px;
-    background-color: #f9f9f9;
-    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+}
+
+.calendar-day.empty {
+    background-color: #f0f0f0;
+    cursor: default;
+    opacity: 0.7;
+}
+
+/* Workout Details Section */
+.workout-details-section {
+    background-color: #fdfdfd;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.workout-status {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.workout-status input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+}
+
+.workout-status label {
+    font-size: 1.1em;
+    color: #444;
+}
+
+.total-completed-days {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #2c3e50;
     margin-bottom: 20px;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.05);
+}
+
+.total-completed-days span {
+    color: #e74c3c; /* สีแดงสำหรับตัวเลข */
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #eee;
+    margin: 30px 0;
+}
+
+/* Timer Controls */
+.timer-controls h3 {
+    margin-top: 0;
+    color: #34495e;
 }
 
 .timer-controls label {
+    display: block;
+    margin-bottom: 8px;
     font-weight: bold;
     color: #555;
 }
 
 .timer-controls input[type="number"] {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
+    width: 100px;
+    padding: 8px 10px;
+    margin-right: 20px;
+    border: 1px solid #ccc;
     border-radius: 5px;
-    font-size: 1rem;
-    box-sizing: border-box; /* Include padding in width */
+    font-size: 1em;
+    margin-bottom: 15px;
 }
 
-.button-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 10px;
-}
-
-.timer-controls button {
-    flex: 1; /* Make buttons expand to fill space */
-    padding: 12px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1.1rem;
+.current-set-display {
+    font-size: 1.3em;
     font-weight: bold;
-    transition: background-color 0.2s ease, transform 0.1s ease;
+    color: #2980b9;
+    margin-bottom: 20px;
 }
 
-#startButton {
-    background-color: #4CAF50;
-    color: white;
-}
-
-#startButton:hover:not(:disabled) {
-    background-color: #45a049;
-    transform: translateY(-1px);
-}
-
-#pauseButton {
-    background-color: #ff9800; /* Orange for pause */
-    color: white;
-}
-
-#pauseButton:hover:not(:disabled) {
-    background-color: #e68a00;
-    transform: translateY(-1px);
-}
-
-#resetTimerButton {
-    background-color: #f44336; /* Red for reset */
-    color: white;
-}
-
-#resetTimerButton:hover:not(:disabled) {
-    background-color: #da190b;
-    transform: translateY(-1px);
-}
-
-.timer-controls button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
+.current-set-display span {
+    color: #e67e22; /* สีส้ม */
 }
 
 .timer-display {
-    text-align: center;
-    padding: 20px;
-    background-color: #e0f2f7; /* Light blue background */
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
-}
-
-.timer-display p {
-    margin: 10px 0;
-    font-size: 1.3rem;
+    font-size: 4em;
+    font-weight: bold;
     color: #333;
+    text-align: center;
+    margin: 30px 0;
+    background-color: #f0f0f0;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.1);
 }
 
-#currentTime {
-    font-size: 3rem;
-    font-weight: bold;
-    color: #2196F3; /* Blue for current time */
+.timer-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
 }
 
-#currentSet, #displayTotalSets {
-    font-weight: bold;
-    color: #4CAF50;
+.timer-buttons button {
+    background-color: #3498db; /* สีฟ้า */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    flex: 1; /* ทำให้ปุ่มมีขนาดเท่ากัน */
+    max-width: 120px;
 }
 
-/* Responsive Design for smaller screens */
+.timer-buttons button:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+}
+
+#pauseTimer {
+    background-color: #e67e22; /* สีส้ม */
+}
+
+#pauseTimer:hover {
+    background-color: #d35400;
+}
+
+#resetTimer {
+    background-color: #e74c3c; /* สีแดง */
+}
+
+#resetTimer:hover {
+    background-color: #c0392b;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 20px;
+    }
     header h1 {
-        font-size: 1.5rem;
+        font-size: 1.5em;
     }
-
-    #mainMenu {
-        width: 100%;
-        max-width: none; /* Full width on small screens */
+    .calendar-grid {
+        gap: 5px;
     }
-
-    .calendar-nav button {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.9rem;
+    .calendar-day {
+        padding: 10px 0;
+        font-size: 0.9em;
     }
-
-    #currentMonthYear {
-        font-size: 1.3rem;
+    .timer-display {
+        font-size: 3em;
+        padding: 15px;
     }
-
-    .day-cell {
-        min-height: 40px;
-        font-size: 0.9rem;
+    .timer-buttons {
+        flex-direction: column; /* ปุ่มเรียงลงมา */
+        align-items: center;
     }
-
-    .day-cell .checkmark {
-        font-size: 1rem;
-        bottom: 2px;
-        right: 2px;
-    }
-}
-
-@media (min-width: 769px) {
-    /* Hide hamburger menu on larger screens */
-    .menu-icon {
-        display: none;
-    }
-
-    /* Show main menu as a horizontal bar on larger screens */
-    #mainMenu {
-        position: static;
-        display: block;
-        width: auto;
-        max-width: none;
-        background-color: transparent;
-        box-shadow: none;
-        transform: translateX(0);
-        opacity: 1;
-    }
-
-    #mainMenu ul {
-        display: flex;
-        justify-content: flex-end;
-    }
-
-    #mainMenu ul li a {
-        padding: 0.5rem 1rem;
-        border-bottom: none;
-        color: white;
-        background-color: transparent;
-    }
-
-    #mainMenu ul li a:hover {
-        background-color: rgba(255, 255, 255, 0.2);
-        border-radius: 5px;
+    .timer-buttons button {
+        width: 80%; /* ความกว้างปุ่มมากขึ้น */
+        max-width: 200px;
+        margin-bottom: 10px;
     }
 }
