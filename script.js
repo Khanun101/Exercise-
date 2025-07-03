@@ -3,8 +3,8 @@
 // const { createClient } = supabase; // นี่คือวิธีดึง client ถ้าใช้ CDN
 
 // Your Supabase configuration (นำมาจาก Supabase Dashboard ของคุณ)
-const SUPABASE_URL = "https://xoscoszdlzchwyisvxbp.supabase.co"; 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY"; 
+const SUPABASE_URL = "https://xoscoszdlzchwyisvxbp.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0bB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY";
 
 const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ==========================================================
@@ -14,11 +14,15 @@ let currentVisibleSection = 'calendarSection';
 
 function toggleMenu() {
     const menu = document.getElementById('mainMenu');
-    if (menu.style.display === 'block') {
-        menu.style.display = 'none';
+    if (menu.classList.contains('active')) {
         menu.classList.remove('active');
+        // เพิ่ม setTimeout เพื่อให้ animation การหายไปทำงานก่อนที่จะซ่อน display
+        setTimeout(() => {
+            menu.style.display = 'none';
+        }, 300); // ต้องตรงกับ transition-duration ใน CSS
     } else {
         menu.style.display = 'block';
+        // เพิ่ม setTimeout เพื่อให้ display: block ทำงานก่อนที่จะเพิ่ม class 'active'
         setTimeout(() => {
             menu.classList.add('active');
         }, 10);
@@ -37,7 +41,7 @@ function showSection(sectionId) {
     currentVisibleSection = sectionId;
 
     if (document.getElementById('mainMenu').classList.contains('active')) {
-        toggleMenu();
+        toggleMenu(); // ปิดเมนูหลังจากเลือก Section
     }
 
     if (sectionId === 'calendarSection') {
@@ -57,7 +61,7 @@ let currentCalendarDate = new Date();
 // *** สำคัญ: ID ผู้ใช้สำหรับเก็บข้อมูลใน Supabase ***
 // ในตอนนี้เราใช้ ID แบบตายตัว "user1"
 // ถ้าต้องการหลายผู้ใช้ ต้องใช้ Supabase Authentication เพื่อได้ UID ของผู้ใช้จริง
-const USER_ID = "user1"; 
+const USER_ID = "user1";
 
 // ฟังก์ชันสำหรับดึงข้อมูลวันที่ออกกำลังกายจาก Supabase
 async function fetchWorkoutDays() {
@@ -71,13 +75,13 @@ async function fetchWorkoutDays() {
             .single(); // คาดหวังว่าจะมีแค่ 1 row สำหรับ user นี้
 
         // Supabase จะคืน error.code 'PGRST116' ถ้าไม่พบ row (ซึ่งปกติสำหรับ user ใหม่)
-        if (error && error.code !== 'PGRST116') { 
+        if (error && error.code !== 'PGRST116') {
             throw error;
         }
 
         if (data) {
             // ถ้ามีข้อมูล ให้คืนค่าในฟิลด์ 'workout_dates' (ซึ่งเป็น jsonb)
-            return data.workout_dates || {}; 
+            return data.workout_dates || {};
         } else {
             console.log("No workout data found for this user in Supabase. Starting fresh.");
             return {}; // ไม่มีข้อมูล ให้คืนค่าเป็น Object ว่างเปล่า
@@ -109,7 +113,7 @@ async function saveWorkoutDays(data) {
 async function renderCalendar() {
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth();
-    
+
     const monthNames = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
@@ -135,7 +139,7 @@ async function renderCalendar() {
     }
 
     // *** ดึงข้อมูลจาก Supabase ก่อน Render ***
-    const workoutDaysFromSupabase = await fetchWorkoutDays(); 
+    const workoutDaysFromSupabase = await fetchWorkoutDays();
     let totalCheckedDays = 0;
     const today = new Date();
     const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
@@ -176,7 +180,7 @@ async function renderCalendar() {
             } else {
                 currentWorkoutDays[date] = true; // ติ๊กถูก
             }
-            
+
             // บันทึกข้อมูลที่แก้ไขแล้วกลับไปยัง Supabase
             await saveWorkoutDays(currentWorkoutDays);
             renderCalendar(); // อัปเดตปฏิทินอีกครั้งเพื่อแสดงผลลัพธ์
@@ -214,7 +218,7 @@ function updateTimerDisplay() {
     }
 
     currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
-    currentSetEl.textContent = currentSetCount !== undefined && currentSetCount !== null ? currentSetCount : ''; 
+    currentSetEl.textContent = currentSetCount !== undefined && currentSetCount !== null ? currentSetCount : '';
     displayTotalSetsEl.textContent = totalSetsToComplete !== undefined && totalSetsToComplete !== null ? totalSetsToComplete : '';
 }
 
@@ -228,14 +232,14 @@ function startTimer() {
         if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
             isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
             alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
-            resetTimer(); 
+            resetTimer();
             return;
         }
-        currentSetCount = 1; 
+        currentSetCount = 1;
         remainingTime = initialSetDuration;
-        updateTimerDisplay(); 
+        updateTimerDisplay();
     }
-    
+
     timerActive = true;
     isPaused = false;
 
@@ -247,30 +251,30 @@ function startTimer() {
 
     timerInterval = setInterval(() => {
         remainingTime--;
-        updateTimerDisplay(); 
+        updateTimerDisplay();
 
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
             timerInterval = null;
             timerActive = false;
-            
-            alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
-            
+
+            alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`);
+
             if (currentSetCount < totalSetsToComplete) {
-                currentSetCount++; 
-                remainingTime = initialSetDuration; 
-                updateTimerDisplay(); 
-                
-                startButton.disabled = false; 
+                currentSetCount++;
+                remainingTime = initialSetDuration;
+                updateTimerDisplay();
+
+                startButton.disabled = false;
                 pauseButton.disabled = true;
                 resetTimerButton.disabled = false;
 
             } else {
                 alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
                 resetTimerButton.disabled = false;
-                startButton.disabled = true; 
+                startButton.disabled = true;
                 pauseButton.disabled = true;
-                remainingTime = 0; 
+                remainingTime = 0;
                 updateTimerDisplay();
             }
         }
@@ -283,7 +287,7 @@ function pauseTimer() {
         timerInterval = null;
         timerActive = false;
         isPaused = true;
-        
+
         startButton.disabled = false;
         pauseButton.disabled = true;
         resetTimerButton.disabled = false;
@@ -295,14 +299,14 @@ function resetTimer() {
     timerInterval = null;
     timerActive = false;
     isPaused = false;
-    
+
     initialSetDuration = parseInt(setDurationInput.value) || 60;
     totalSetsToComplete = parseInt(totalSetsInput.value) || 3;
-    
-    remainingTime = initialSetDuration;
-    currentSetCount = 0; 
 
-    updateTimerDisplay(); 
+    remainingTime = initialSetDuration;
+    currentSetCount = 0;
+
+    updateTimerDisplay();
 
     startButton.disabled = false;
     pauseButton.disabled = true;
@@ -311,13 +315,33 @@ function resetTimer() {
     totalSetsInput.disabled = false;
 }
 
+// ====== เพิ่ม Event Listeners ที่นี่ ======
+// --- Event Listeners สำหรับปุ่ม Timer ---
 startButton.addEventListener('click', startTimer);
 pauseButton.addEventListener('click', pauseTimer);
 resetTimerButton.addEventListener('click', resetTimer);
 
-setDurationInput.addEventListener('input', resetTimer); 
-totalSetsInput.addEventListener('input', resetTimer); 
+setDurationInput.addEventListener('input', resetTimer);
+totalSetsInput.addEventListener('input', resetTimer);
+
+// --- Event Listeners สำหรับปุ่มปฏิทิน (ปุ่ม "ก่อนหน้า" และ "ถัดไป") ---
+document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+
+// --- Event Listeners สำหรับเมนูด้านบน (Hamburger icon และลิงก์ในเมนู) ---
+document.getElementById('menuIcon').addEventListener('click', toggleMenu);
+
+document.querySelectorAll('#mainMenu ul li a').forEach(item => {
+    item.addEventListener('click', function(event) {
+        event.preventDefault(); // ป้องกันการเลื่อนขึ้นไปข้างบนเมื่อคลิกลิงก์
+        const sectionId = this.dataset.section;
+        if (sectionId) {
+            showSection(sectionId);
+        }
+    });
+});
 
 document.addEventListener('DOMContentLoaded', function() {
-    showSection('calendarSection'); 
+    showSection('calendarSection');
+    // renderCalendar() จะถูกเรียกใน showSection('calendarSection') อยู่แล้ว
 });
