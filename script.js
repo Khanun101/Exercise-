@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Timer State ---
-    let timerInterval;
+    let timerInterval = null; // Initialize as null
     let remainingTime = 0;
     let initialTimerDuration = 60;
     let completedSets = 0;
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
             stopTimerBtn.disabled = true; // เมื่อทำครบแล้ว ปุ่มหยุดไม่ควรใช้งาน
         } else {
             // ถ้ายังไม่ครบ และ Timer ไม่ได้กำลังทำงานอยู่ (เช่น เพิ่งโหลดหน้า, หรือเซ็ตก่อนหน้าเพิ่งจบ)
-            if (!timerInterval) {
+            if (!timerInterval) { // timerInterval เป็น null เมื่อไม่มีการจับเวลาทำงาน
                 startTimerBtn.disabled = false;
             }
             stopTimerBtn.disabled = true; // ปุ่มหยุดควรถูกปิดใช้งานเมื่อไม่มี Timer ทำงานอยู่
@@ -219,67 +219,72 @@ document.addEventListener('DOMContentLoaded', () => {
     function startTimer() {
         requestNotificationPermission();
 
-        // ถ้าเวลาหมด หรือเพิ่งเริ่มต้น หรือทำครบเซ็ตแล้ว ให้ตั้งเวลาเริ่มต้นใหม่
+        // Ensure remainingTime is valid before starting
         if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
             remainingTime = initialTimerDuration;
         }
+        // Make sure initialTimerDuration is always positive
+        if (initialTimerDuration <= 0) {
+            initialTimerDuration = 1; // Default to 1 second if invalid
+            timerDurationInput.value = initialTimerDuration;
+        }
         
-        if (timerInterval) clearInterval(timerInterval); // เคลียร์ interval เก่าถ้ามี
+        if (timerInterval) clearInterval(timerInterval); // Clear old interval if exists
+        timerInterval = null; // Ensure it's null before setting a new one
 
-        // Disable ปุ่ม Start และ Enable ปุ่ม Stop/Reset
         startTimerBtn.disabled = true;
         stopTimerBtn.disabled = false;
-        resetTimerBtn.disabled = false; // รีเซ็ตเวลาควรใช้งานได้เสมอเมื่อจับเวลาอยู่
+        resetTimerBtn.disabled = false;
 
-        updateTimerDisplay(); // อัปเดตเวลาทันทีที่เริ่ม
+        updateTimerDisplay(); // Update display immediately when starting
 
         timerInterval = setInterval(() => {
             if (remainingTime > 0) {
                 remainingTime--;
                 updateTimerDisplay();
-            } else { // เวลาของเซ็ตปัจจุบันหมดแล้ว!
-                clearInterval(timerInterval); // หยุดจับเวลา
-                timerSound.play(); // เล่นเสียงเมื่อเวลาหมด
+            } else { // Timer has reached 00:00 for the current set
+                console.log("Timer reached 0. Processing set completion."); // DEBUG LOG
+                clearInterval(timerInterval); // Stop the current interval
+                timerInterval = null; // Mark interval as stopped
+                timerSound.play(); // Play sound
 
-                // เพิ่มจำนวนเซ็ตที่ทำได้ หากยังไม่ครบเป้าหมาย
+                // Increment completed sets if not already at target
                 if (completedSets < targetSets) {
                     completedSets++; // นับ 1 เซ็ต
                     saveTimerState();
                     showTimerNotification(`Set ${completedSets} completed!`);
                 }
                 
-                // อัปเดตการแสดงผลเซ็ตและปุ่มต่างๆ
-                updateSetDisplay(); 
+                updateSetDisplay(); // Update the UI for sets count and button states
 
-                // ตรวจสอบสถานะหลังจากอัปเดตเซ็ต
+                // Check if all target sets are completed
                 if (completedSets >= targetSets && targetSets > 0) {
-                    // ถ้าครบเซ็ตเป้าหมายแล้ว: แสดง DONE! และปิดปุ่มเริ่ม (จัดการใน updateSetDisplay)
-                    // ปุ่มหยุดก็ปิด (จัดการใน updateSetDisplay)
+                    // All sets done, UI already updated by updateSetDisplay()
+                    // Buttons handled by updateSetDisplay()
                 } else {
-                    // ถ้ายังไม่ครบ: รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
+                    // Not all sets done, reset time for the next set
                     remainingTime = initialTimerDuration;
-                    updateTimerDisplay(); // อัปเดต display ให้เป็นเวลาเริ่มต้นของเซ็ตถัดไป
-                    startTimerBtn.disabled = false; // เปิดปุ่มเริ่มสำหรับเซ็ตถัดไป
+                    updateTimerDisplay(); // Show the reset time
+                    startTimerBtn.disabled = false; // Enable start button for next set
                 }
-                // ปุ่ม Stop และ Reset Timer ถูกจัดการใน updateSetDisplay และฟังก์ชัน stopTimer
-                stopTimerBtn.disabled = true; // เมื่อจับเวลาสิ้นสุดรอบ ปุ่มหยุดควรถูกปิดใช้งาน
+                stopTimerBtn.disabled = true; // Stop button should be disabled when timer is not running
             }
-        }, 1000); // ทุก 1 วินาที
+        }, 1000);
     }
 
     function stopTimer() {
         clearInterval(timerInterval);
-        timerInterval = null; // ตั้งค่าให้เป็น null เพื่อบ่งบอกว่าไม่มี interval ทำงานอยู่
+        timerInterval = null; // Set to null to indicate no active interval
         startTimerBtn.disabled = false;
         stopTimerBtn.disabled = true;
         resetTimerBtn.disabled = false;
     }
 
     function resetTimer() {
-        stopTimer();
+        stopTimer(); // This will also handle button states
         remainingTime = initialTimerDuration;
         updateTimerDisplay();
-        // ปุ่ม Start/Stop/Reset จะถูกจัดการใน stopTimer() และ updateSetDisplay()
+        // Buttons handled by stopTimer() and updateSetDisplay()
     }
 
     function resetSets() {
