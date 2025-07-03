@@ -3,70 +3,60 @@ let currentVisibleSection = 'calendarSection'; // ตั้งค่าส่ว
 
 function toggleMenu() {
     const menu = document.getElementById('mainMenu');
-    // ตรวจสอบว่าเมนูถูกซ่อนด้วย display: none หรือไม่
-    // ถ้า display เป็น 'none' ให้เปลี่ยนเป็น 'block'
-    // ถ้า display เป็น 'block' (หรืออื่นๆ) ให้เปลี่ยนเป็น 'none'
-    // วิธีนี้ทำให้ transition ทำงานได้ดีขึ้นเมื่อเปลี่ยนจาก display: none -> block
     if (menu.style.display === 'block') {
-        menu.style.display = 'none'; // ซ่อนทันที
-        menu.classList.remove('active'); // เอา class active ออก
+        menu.style.display = 'none';
+        menu.classList.remove('active');
     } else {
-        menu.style.display = 'block'; // แสดงทันที
-        setTimeout(() => { // รอเล็กน้อยเพื่อให้ display: block มีผลก่อนเพิ่ม class active
-            menu.classList.add('active'); // เพิ่ม class active เพื่อให้ transition ทำงาน
-        }, 10); // หน่วงเวลาเล็กน้อย
+        menu.style.display = 'block';
+        setTimeout(() => {
+            menu.classList.add('active');
+        }, 10);
     }
 }
 
 function showSection(sectionId) {
-    // ซ่อน Section ที่กำลังแสดงอยู่
     if (currentVisibleSection) {
         document.getElementById(currentVisibleSection).classList.remove('active');
         document.getElementById(currentVisibleSection).classList.add('hidden');
     }
 
-    // แสดง Section ที่ต้องการ
     const newSection = document.getElementById(sectionId);
     newSection.classList.remove('hidden');
     newSection.classList.add('active');
-    currentVisibleSection = sectionId; // อัปเดต Section ที่กำลังแสดง
+    currentVisibleSection = sectionId;
 
-    // ปิดเมนูหลังจากเลือก (ใช้ toggleMenu อีกครั้งเพื่อปิด)
     if (document.getElementById('mainMenu').classList.contains('active')) {
         toggleMenu(); 
     }
 
-    // หากเป็นส่วนปฏิทิน ให้ render ใหม่
     if (sectionId === 'calendarSection') {
         renderCalendar();
     } else if (sectionId === 'timerSection') {
-        resetTimer(); // รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer
+        resetTimer();
     }
 }
 
-// --- ส่วนปฏิทิน ---
+// --- ส่วนปฏิทิน (ไม่มีการเปลี่ยนแปลง) ---
 const calendarGridEl = document.getElementById('calendar-grid');
 const currentMonthYearEl = document.getElementById('currentMonthYear');
 const totalWorkoutDaysEl = document.getElementById('totalWorkoutDays');
 
-let currentCalendarDate = new Date(); // วันที่ปัจจุบันของปฏิทินที่แสดงอยู่
-let workoutDays = JSON.parse(localStorage.getItem('workoutDays')) || {}; // เก็บวันที่ออกกำลังกายไว้ใน localStorage
+let currentCalendarDate = new Date();
+let workoutDays = JSON.parse(localStorage.getItem('workoutDays')) || {};
 
 function renderCalendar() {
     const year = currentCalendarDate.getFullYear();
-    const month = currentCalendarDate.getMonth(); // 0-11
+    const month = currentCalendarDate.getMonth();
     
-    // ตั้งชื่อเดือนเป็นภาษาไทย
     const monthNames = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
         "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
     currentMonthYearEl.textContent = `${monthNames[month]} ${year}`;
 
-    // หาข้อมูลวันในเดือน
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = อาทิตย์, 1 = จันทร์...
+    const startDayOfWeek = firstDayOfMonth.getDay();
 
     let html = `
         <div class="day-header">อา</div>
@@ -78,26 +68,22 @@ function renderCalendar() {
         <div class="day-header">ส</div>
     `;
 
-    // เพิ่มช่องว่างสำหรับวันก่อนหน้าวันที่ 1 ของเดือน
     for (let i = 0; i < startDayOfWeek; i++) {
         html += `<div class="day-cell empty"></div>`;
     }
 
-    // เพิ่มวันในปฏิทิน
     let totalCheckedDays = 0;
     const today = new Date();
-    const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`; // รูปแบบYYYY-M-D ของวันปัจจุบัน
+    const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
 
     for (let i = 1; i <= lastDayOfMonth; i++) {
-        const dateString = `${year}-${month + 1}-${i}`; // รูปแบบYYYY-M-D สำหรับแต่ละวันในปฏิทิน
+        const dateString = `${year}-${month + 1}-${i}`;
         let classes = 'day-cell';
 
-        // ไฮไลต์วันปัจจุบัน
         if (dateString === todayString) {
             classes += ' today';
         }
 
-        // ตรวจสอบว่าวันนี้มีการติ๊กถูกหรือไม่
         if (workoutDays[dateString]) {
             classes += ' checked';
             totalCheckedDays++;
@@ -113,22 +99,20 @@ function renderCalendar() {
     calendarGridEl.innerHTML = html;
     totalWorkoutDaysEl.textContent = totalCheckedDays;
 
-    // เพิ่ม Event Listener ให้แต่ละวัน (ไม่ใช่วันว่าง)
     document.querySelectorAll('#calendar-grid .day-cell:not(.empty)').forEach(cell => {
         cell.addEventListener('click', function() {
             const date = this.dataset.date;
             if (workoutDays[date]) {
-                delete workoutDays[date]; // ยกเลิกติ๊กถูก
+                delete workoutDays[date];
             } else {
-                workoutDays[date] = true; // ติ๊กถูก
+                workoutDays[date] = true;
             }
-            localStorage.setItem('workoutDays', JSON.stringify(workoutDays)); // บันทึกข้อมูล
-            renderCalendar(); // อัปเดตปฏิทิน
+            localStorage.setItem('workoutDays', JSON.stringify(workoutDays));
+            renderCalendar();
         });
     });
 }
 
-// ฟังก์ชันเปลี่ยนเดือนในปฏิทิน
 function changeMonth(delta) {
     currentCalendarDate.setMonth(currentCalendarDate.getMonth() + delta);
     renderCalendar();
@@ -145,12 +129,12 @@ const currentSetEl = document.getElementById('currentSet');
 const displayTotalSetsEl = document.getElementById('displayTotalSets');
 
 let timerInterval;
-let initialSetDuration;     // เก็บเวลาเริ่มต้นของแต่ละเซ็ต (จาก input)
-let remainingTime;          // เวลาที่เหลือในเซ็ตปัจจุบัน
-let currentSetCount;        // จำนวนเซ็ตที่กำลังทำอยู่ (1, 2, 3...)
-let totalSetsToComplete;    // จำนวนเซ็ตทั้งหมดที่ผู้ใช้กำหนด
-let timerActive = false;    // สถานะว่าตัวจับเวลากำลังทำงานอยู่หรือไม่
-let isPaused = false;       // สถานะว่าตัวจับเวลาถูกหยุดชั่วคราวหรือไม่
+let initialSetDuration;
+let remainingTime;
+let currentSetCount;
+let totalSetsToComplete;
+let timerActive = false;
+let isPaused = false;
 
 function updateTimerDisplay() {
     currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
@@ -159,45 +143,39 @@ function updateTimerDisplay() {
 }
 
 function startTimer() {
-    // ป้องกันการกดเริ่มซ้ำขณะทำงาน หรือเมื่อหยุดชั่วคราวแต่ไม่ได้กด "เริ่ม" ต่อ
-    if (timerActive && !isPaused) return; 
+    if (timerActive && !isPaused) return;
 
-    // ดึงค่าจาก input เมื่อเริ่ม Timer ครั้งแรก หรือเมื่อมีการเปลี่ยนค่า
-    if (currentSetCount === 0 || totalSetsToComplete === 0) { // ตรวจสอบว่าเป็นการเริ่มครั้งแรก
+    if (currentSetCount === 0 || totalSetsToComplete === 0) {
         initialSetDuration = parseInt(setDurationInput.value);
         totalSetsToComplete = parseInt(totalSetsInput.value);
 
         if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
             isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
             alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
-            resetTimer(); // รีเซ็ตทุกอย่างหากข้อมูลไม่ถูกต้อง
+            resetTimer();
             return;
         }
         currentSetCount = 1; // เริ่มต้นที่เซ็ต 1 สำหรับการแสดงผลทันที
-        remainingTime = initialSetDuration; // ตั้งเวลาเริ่มต้นสำหรับเซ็ตแรก
+        remainingTime = initialSetDuration;
         updateTimerDisplay(); // อัปเดตการแสดงผลทันทีหลังกำหนดค่าเริ่มต้น
-    } 
-    // หากถูกหยุดชั่วคราว ให้ใช้เวลาที่เหลืออยู่
-    if (isPaused) {
-        // เวลา remainingTime ยังคงเป็นค่าที่หยุดไว้
-    } else if (currentSetCount > 0 && remainingTime === initialSetDuration) {
-        // กรณีที่ผู้ใช้กด Start เพื่อเริ่มเซ็ตถัดไป (หลังจากเซ็ตก่อนหน้าจบและเวลารีเซ็ตแล้ว)
-        // หรือกรณีเริ่มเซ็ตแรก
-        // ไม่ต้องทำอะไร เพราะ remainingTime ถูกตั้งค่าแล้ว
     }
+    
+    // หากถูกหยุดชั่วคราว ให้ใช้เวลาที่เหลืออยู่ (ไม่ต้องปรับ remainingTime)
+    // แต่ถ้าไม่ใช่การหยุดชั่วคราวและ remainingTime เป็น 0 (หมายถึงเซ็ตก่อนหน้าจบไปแล้ว) 
+    // เราจะให้ remainingTime ถูกตั้งค่าโดยการตรวจจับใน `if (remainingTime <= 0)` ใน setInterval
+    // จึงไม่จำเป็นต้องเซ็ต remainingTime = initialSetDuration ตรงนี้ซ้ำอีก
     
     timerActive = true;
     isPaused = false;
 
-    // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = true;
     pauseButton.disabled = false;
-    resetTimerButton.disabled = false; 
+    resetTimerButton.disabled = false;
     setDurationInput.disabled = true;
     totalSetsInput.disabled = true;
 
-    // *** ย้าย updateTimerDisplay() มาตรงนี้ เพื่อให้แน่ใจว่าค่าล่าสุดแสดงผลก่อนเริ่มจับเวลา ***
-    updateTimerDisplay(); 
+    // *** updateTimerDisplay() ถูกเรียกไปแล้วด้านบนสำหรับเริ่มเซ็ตแรก ***
+    // *** และจะถูกเรียกภายใน setInterval ด้วย ***
 
     timerInterval = setInterval(() => {
         remainingTime--;
@@ -205,20 +183,16 @@ function startTimer() {
 
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
-            timerInterval = null; // เคลียร์ interval
-            timerActive = false; // ตัวจับเวลาหยุด
-
-            // เล่นเสียงแจ้งเตือน (สามารถเพิ่มได้ถ้าต้องการ)
-            // const audio = new Audio('path/to/your/sound.mp3');
-            // audio.play();
+            timerInterval = null;
+            timerActive = false;
             
             alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
             
             if (currentSetCount < totalSetsToComplete) {
-                // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เพิ่มเซ็ตและรีเซ็ตเวลา
-                currentSetCount++; // *** ตรงนี้คือการเพิ่มจำนวนเซ็ต ***
+                // ถ้ายังไม่ครบเซ็ตทั้งหมด:
+                currentSetCount++; // <<<<< เพิ่มจำนวนเซ็ตทันทีที่เวลาหมด
                 remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
-                updateTimerDisplay(); // อัปเดตการแสดงผล (เซ็ตใหม่, เวลารีเซ็ต)
+                updateTimerDisplay(); // <<<<< อัปเดตการแสดงผลทันทีเพื่อให้เซ็ตใหม่ปรากฏ
                 
                 // ตั้งค่าปุ่มเพื่อรอการกด "เริ่ม" ใหม่
                 startButton.disabled = false; 
@@ -232,12 +206,11 @@ function startTimer() {
                 resetTimerButton.disabled = false;
                 startButton.disabled = true; 
                 pauseButton.disabled = true;
-                // หากต้องการให้แสดงเวลาเป็น 00 เมื่อจบครบทุกเซ็ต
-                remainingTime = 0;
+                remainingTime = 0; // แสดงเวลาเป็น 00 เมื่อจบครบทุกเซ็ต
                 updateTimerDisplay();
             }
         }
-    }, 1000); // ทุก 1 วินาที
+    }, 1000);
 }
 
 function pauseTimer() {
@@ -247,9 +220,9 @@ function pauseTimer() {
         timerActive = false;
         isPaused = true;
         
-        startButton.disabled = false; // ให้กดเริ่มต่อได้
+        startButton.disabled = false;
         pauseButton.disabled = true;
-        resetTimerButton.disabled = false; // อนุญาตให้ Reset ได้ตลอดเวลาที่หยุด
+        resetTimerButton.disabled = false;
     }
 }
 
@@ -259,30 +232,32 @@ function resetTimer() {
     timerActive = false;
     isPaused = false;
     
-    // ตั้งค่าเริ่มต้นใหม่ทั้งหมด
-    initialSetDuration = parseInt(setDurationInput.value) || 60; // ใช้ค่าจาก input หรือ 60 เป็น default
-    totalSetsToComplete = parseInt(totalSetsInput.value) || 3; // ใช้ค่าจาก input หรือ 3 เป็น default
-    remainingTime = initialSetDuration; // เวลาเริ่มต้นของเซ็ตแรก
-    currentSetCount = 0; // ตั้งเป็น 0 เมื่อรีเซ็ต ให้เป็นค่าว่างก่อนเริ่ม
+    initialSetDuration = parseInt(setDurationInput.value) || 60;
+    totalSetsToComplete = parseInt(totalSetsInput.value) || 3;
+    
+    // currentSetCount = 0; // ถูกต้องแล้ว: เมื่อรีเซ็ต ให้เป็น 0
+    remainingTime = initialSetDuration; // เวลาที่เหลือถูกตั้งเป็นเวลาเริ่มต้น
+    
+    // *** อัปเดตค่า initialSetDuration และ totalSetsToComplete ในหน้าจอทันที ***
+    // currentSetEl.textContent = currentSetCount; // จะแสดง 0
+    // displayTotalSetsEl.textContent = totalSetsToComplete; // แสดงจำนวนเซ็ตทั้งหมด
+    updateTimerDisplay(); // เรียกใช้เพื่อให้ค่า 0/N และเวลาที่ตั้งไว้แสดงผล
 
-    // รีเซ็ตปุ่มและ input
     startButton.disabled = false;
     pauseButton.disabled = true;
-    resetTimerButton.disabled = true; // ปิดปุ่มรีเซ็ตเมื่อยังไม่เริ่ม
+    resetTimerButton.disabled = true;
     setDurationInput.disabled = false;
     totalSetsInput.disabled = false;
-
-    updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็นค่าเริ่มต้น
 }
 
-// Event Listeners สำหรับปุ่ม Timer
+// Event Listeners
 startButton.addEventListener('click', startTimer);
 pauseButton.addEventListener('click', pauseTimer);
 resetTimerButton.addEventListener('click', resetTimer);
 
-// เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
+// Initial load
 document.addEventListener('DOMContentLoaded', function() {
-    showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
-    renderCalendar(); // Render ปฏิทินครั้งแรก
-    resetTimer(); // รีเซ็ต Timer เพื่อตั้งค่าเริ่มต้นทั้งหมด
+    showSection('calendarSection');
+    renderCalendar();
+    resetTimer(); // ให้ Timer แสดงค่าเริ่มต้นทันทีเมื่อเข้าหน้า
 });
