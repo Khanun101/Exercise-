@@ -11,7 +11,7 @@ body {
     margin: 0;
     color: #334e68;
     line-height: 1.6;
-    overflow-x: hidden; /* ป้องกัน scrollbar แนวนอน */
+    overflow-x: hidden;
 }
 
 .container {
@@ -31,108 +31,134 @@ h1 {
     font-weight: 700;
 }
 
-.days-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-    margin-bottom: 30px;
-}
-
-.day-card {
-    background-color: #e2f0f9;
-    border-radius: 15px;
-    padding: 15px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, background-color 0.2s ease-out;
+/* Calendar Header (Month Navigation) */
+.calendar-header {
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: space-between;
-    min-height: 120px;
+    align-items: center;
+    margin-bottom: 20px;
+    background-color: #e2f0f9;
+    padding: 10px 20px;
+    border-radius: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 
-.day-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-}
-
-.day-card h3 {
-    margin-top: 0;
-    margin-bottom: 15px;
+.calendar-header h2 {
+    margin: 0;
     color: #3182ce;
+    font-size: 1.8em;
     font-weight: 600;
 }
 
-/* Checkbox Styling */
-.checkbox-container {
-    display: block;
-    position: relative;
-    cursor: pointer;
-    font-size: 22px;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-    width: 25px;
-    height: 25px;
-}
-
-.checkbox-container input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-    height: 0;
-    width: 0;
-}
-
-.checkmark {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 25px;
-    width: 25px;
-    background-color: #cbd5e0;
-    border-radius: 8px;
-    transition: background-color 0.3s ease-out, transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-}
-
-.checkbox-container:hover input ~ .checkmark {
-    background-color: #a0aec0;
-}
-
-.checkbox-container input:checked ~ .checkmark {
+.calendar-header button {
     background-color: #63b3ed;
-    transform: scale(1.1);
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.2em;
+    transition: background-color 0.2s ease-out, transform 0.2s ease-out;
 }
 
-.checkmark:after {
-    content: "";
+.calendar-header button:hover {
+    background-color: #4299e1;
+    transform: scale(1.05);
+}
+
+.calendar-header button:active {
+    transform: scale(0.98);
+}
+
+/* Calendar Day Names Header */
+.calendar-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    background-color: #a7d9ed; /* สีฟ้าอ่อน */
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+
+.calendar-grid-header div {
+    padding: 10px 5px;
+    font-weight: 700;
+    color: #2c5282;
+    font-size: 0.95em;
+    text-align: center;
+}
+
+/* Calendar Grid (Days) */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-bottom: 30px;
+}
+
+.calendar-day {
+    background-color: #f7fafc; /* สีอ่อนมากสำหรับวันปกติ */
+    border-radius: 10px;
+    padding: 15px 5px;
+    height: 60px; /* กำหนดความสูงให้เท่ากัน */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease-out, transform 0.2s ease-out, box-shadow 0.2s ease-out;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    position: relative; /* สำหรับ checkmark */
+    overflow: hidden; /* ซ่อนสิ่งที่เกิน */
+}
+
+.calendar-day:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Styles for days not in current month */
+.calendar-day.other-month {
+    background-color: #ebf4ff; /* สีจางลงสำหรับวันของเดือนอื่น */
+    color: #a0aec0;
+    cursor: default;
+    opacity: 0.7;
+    pointer-events: none; /* ทำให้คลิกไม่ได้ */
+}
+
+/* Style for selected (ticked) workout days */
+.calendar-day.is-workout {
+    background-color: #63b3ed; /* สีฟ้าสดใสเมื่อติ๊ก */
+    color: white;
+    font-weight: 700;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15), 0 0 0 3px rgba(99, 179, 237, 0.5); /* เพิ่ม glow */
+    transform: scale(1.03);
+    animation: bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* Checkmark effect for ticked days (optional, can be an icon or just background color) */
+/* This is a simple visual indication, could be replaced with an actual checkmark icon */
+.calendar-day.is-workout::after {
+    content: '✔'; /* Unicode checkmark */
     position: absolute;
-    display: none;
+    bottom: 5px;
+    right: 5px;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 0;
+    animation: fadeInCheck 0.3s forwards;
 }
 
-.checkbox-container input:checked ~ .checkmark:after {
-    display: block;
+@keyframes fadeInCheck {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-.checkbox-container .checkmark:after {
-    left: 9px;
-    top: 5px;
-    width: 5px;
-    height: 10px;
-    border: solid white;
-    border-width: 0 3px 3px 0;
-    -webkit-transform: rotate(45deg);
-    -ms-transform: rotate(45deg);
-    transform: rotate(45deg);
-}
-
-/* Animation เมื่อ Card ถูกเลือก */
-.day-card.is-checked {
-    background-color: #cce7f5;
-    border: 1px solid #94d3f5;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15), 0 0 0 3px rgba(99, 179, 237, 0.5);
-    transform: scale(1.02);
+@keyframes bounceIn {
+    0% { transform: scale(0.9); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1.03); }
 }
 
 
@@ -142,10 +168,10 @@ h1 {
     font-size: 1.5em;
     font-weight: 700;
     color: #2b6cb0;
-    line-height: 1.8; /* เพิ่มระยะห่างระหว่างบรรทัด */
+    line-height: 1.8;
 }
 
-#currentWeekWorkoutDays,
+#currentMonthWorkoutDays,
 #totalCumulativeWorkoutDays {
     display: inline-block;
     color: #e53e3e; /* สีแดงสำหรับตัวเลข */
@@ -178,7 +204,7 @@ h1 {
 }
 
 #resetAllButton:hover {
-    background-color: #b8860b; /* สีเข้มขึ้นเมื่อเมาส์ชี้ */
+    background-color: #b8860b;
     transform: translateY(-2px);
 }
 
@@ -190,27 +216,36 @@ h1 {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .days-grid {
-        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    }
-    .day-card {
-        min-height: 100px;
-        padding: 10px;
+    .calendar-grid-header div,
+    .calendar-day {
+        font-size: 0.85em;
+        padding: 10px 3px;
+        height: 50px;
     }
     h1 {
-        font-size: 1.8em;
+        font-size: 1.5em;
+    }
+    .calendar-header h2 {
+        font-size: 1.5em;
     }
     .workout-summary {
-        font-size: 1.2em;
+        font-size: 1.1em;
     }
 }
 
 @media (max-width: 480px) {
-    .days-grid {
-        grid-template-columns: 1fr;
-    }
     .container {
-        padding: 20px;
+        padding: 15px;
+    }
+    .calendar-day {
+        height: 40px;
+        padding: 8px 2px;
+    }
+    .calendar-header h2 {
+        font-size: 1.2em;
+    }
+    .calendar-header button {
+        padding: 5px 10px;
+        font-size: 1em;
     }
 }
-
