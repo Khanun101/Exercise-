@@ -3,69 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workout Calendar & Timer Tracker</title>
+    <title>ระบบออกกำลังกายส่วนตัว</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h1>🗓️ ปฏิทินติดตามการออกกำลังกาย 🗓️</h1>
+    <header>
+        <h1>ระบบออกกำลังกายส่วนตัว</h1>
+        <div class="menu-icon" onclick="toggleMenu()">
+            &#9776; </div>
+        <nav id="mainMenu">
+            <ul>
+                <li><a href="#" onclick="showSection('calendarSection')">ปฏิทินออกกำลังกาย</a></li>
+                <li><a href="#" onclick="showSection('timerSection')">ตัวจับเวลา</a></li>
+            </ul>
+        </nav>
+    </header>
 
-        <div class="calendar-header">
-            <button id="prevMonthBtn">&lt;</button>
-            <h2 id="currentMonthYear"></h2>
-            <button id="nextMonthBtn">&gt;</button>
-        </div>
-
-        <div class="calendar-grid-header">
-            <div>อาทิตย์</div>
-            <div>จันทร์</div>
-            <div>อังคาร</div>
-            <div>พุธ</div>
-            <div>พฤหัสบดี</div>
-            <div>ศุกร์</div>
-            <div>เสาร์</div>
-        </div>
-
-        <div class="calendar-grid" id="calendarGrid">
+    <main>
+        <section id="calendarSection" class="active">
+            <h2>ปฏิทินการออกกำลังกาย</h2>
+            <div class="calendar-nav">
+                <button onclick="changeMonth(-1)">&#9664; ก่อนหน้า</button>
+                <h3 id="currentMonthYear"></h3>
+                <button onclick="changeMonth(1)">ถัดไป &#9654;</button>
             </div>
+            <div id="calendar-grid"></div>
+            <p class="summary">รวมวันที่ออกกำลังกายไปแล้ว: <span id="totalWorkoutDays">0</span> วัน</p>
+        </section>
 
-        <div class="workout-summary">
-            <p>เดือนนี้: <span id="currentMonthWorkoutDays">0</span> วัน</p>
-            <p>รวมทั้งหมด: <span id="totalCumulativeWorkoutDays">0</span> วัน</p>
-        </div>
-
-        <hr class="separator"> <div class="workout-timer-section">
-            <h2>⏱️ ตัวจับเวลาเซ็ตออกกำลังกาย ⏱️</h2>
-
-            <div class="timer-settings">
-                <div class="setting-group">
-                    <label for="timerDurationInput">เวลา/เซ็ต (วินาที):</label>
-                    <input type="number" id="timerDurationInput" value="60" min="1" max="3600">
-                </div>
-                <div class="setting-group">
-                    <label for="targetSetsInput">จำนวนเซ็ตเป้าหมาย:</label>
-                    <input type="number" id="targetSetsInput" value="3" min="1" max="99">
-                </div>
-            </div>
-
-            <div class="timer-display" id="timerDisplay">00:00</div>
-            <div class="set-count-display">
-                เซ็ตปัจจุบัน: <span id="currentSetsCount">0</span> / <span id="displayTargetSets">0</span>
-            </div>
-
+        <section id="timerSection" class="hidden">
+            <h2>ตัวจับเวลาการออกกำลังกาย</h2>
             <div class="timer-controls">
-                <button id="startTimerBtn" class="timer-btn primary">เริ่ม</button>
-                <button id="stopTimerBtn" class="timer-btn warning">หยุด</button>
-                <button id="resetTimerBtn" class="timer-btn secondary">รีเซ็ตเวลา</button>
-                <button id="resetSetsBtn" class="timer-btn danger" disabled>รีเซ็ตเซ็ต</button>
+                <label for="setDuration">เวลาต่อเซ็ต (วินาที):</label>
+                <input type="number" id="setDuration" value="60" min="1">
+                <label for="totalSets">จำนวนเซ็ตทั้งหมด:</label>
+                <input type="number" id="totalSets" value="3" min="1">
+                <div class="button-group">
+                    <button id="startButton">เริ่ม</button>
+                    <button id="pauseButton" disabled>หยุดชั่วคราว</button>
+                    <button id="resetTimerButton" disabled>รีเซ็ต</button>
+                </div>
             </div>
-        </div>
-
-        <button id="resetAllButton">รีเซ็ตข้อมูลทั้งหมด (ปฏิทิน & เซ็ต)</button>
-    </div>
+            <div class="timer-display">
+                <p>เวลาปัจจุบัน: <span id="currentTime">00</span></p>
+                <p>เซ็ตที่: <span id="currentSet">0</span> / <span id="displayTotalSets">0</span></p>
+            </div>
+        </section>
+    </main>
 
     <script src="script.js"></script>
-    <audio id="timerSound" src="https://www.soundjay.com/buttons/beep-07a.mp3" preload="auto"></audio>
 </body>
 </html>
