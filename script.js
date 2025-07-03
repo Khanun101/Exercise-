@@ -1,5 +1,5 @@
 // --- ส่วนควบคุมการแสดงผลส่วนต่างๆ (เมนูและ Section) ---
-let currentVisibleSection = 'calendarSection'; // ตั้งค่าส่วนที่แสดงอยู่ปัจจุบัน
+let currentVisibleSection = 'calendarSection';
 
 function toggleMenu() {
     const menu = document.getElementById('mainMenu');
@@ -26,13 +26,13 @@ function showSection(sectionId) {
     currentVisibleSection = sectionId;
 
     if (document.getElementById('mainMenu').classList.contains('active')) {
-        toggleMenu(); 
+        toggleMenu();
     }
 
     if (sectionId === 'calendarSection') {
         renderCalendar();
     } else if (sectionId === 'timerSection') {
-        resetTimer();
+        resetTimer(); // สำคัญ: รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer เพื่อตั้งค่าเริ่มต้น
     }
 }
 
@@ -136,50 +136,53 @@ let totalSetsToComplete;
 let timerActive = false;
 let isPaused = false;
 
+// ฟังก์ชันสำหรับอัปเดตการแสดงผลของตัวจับเวลา
 function updateTimerDisplay() {
+    // ตรวจสอบให้แน่ใจว่า element มีอยู่จริงก่อนอัปเดต
+    if (!currentTimeEl || !currentSetEl || !displayTotalSetsEl) {
+        console.error("Error: Timer display elements not found in HTML!");
+        return;
+    }
+
     currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
-    currentSetEl.textContent = currentSetCount;
-    displayTotalSetsEl.textContent = totalSetsToComplete;
+    currentSetEl.textContent = currentSetCount; // อัปเดตค่าเซ็ตปัจจุบัน
+    displayTotalSetsEl.textContent = totalSetsToComplete; // อัปเดตค่าจำนวนเซ็ตทั้งหมด
 }
 
 function startTimer() {
     if (timerActive && !isPaused) return;
 
-    if (currentSetCount === 0 || totalSetsToComplete === 0) {
+    // ดึงค่าจาก input เมื่อเริ่ม Timer ครั้งแรก หรือเมื่อมีการเปลี่ยนค่าหลังจากรีเซ็ต
+    // ตรวจสอบว่า currentSetCount เป็น 0 หรือยังไม่ได้กำหนดค่าเริ่มต้น
+    if (currentSetCount === 0 || initialSetDuration === undefined || totalSetsToComplete === undefined) {
         initialSetDuration = parseInt(setDurationInput.value);
         totalSetsToComplete = parseInt(totalSetsInput.value);
 
+        // ตรวจสอบความถูกต้องของค่าที่ป้อน
         if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
             isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
             alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
-            resetTimer();
+            resetTimer(); // รีเซ็ตหากค่าไม่ถูกต้อง
             return;
         }
-        currentSetCount = 1; // เริ่มต้นที่เซ็ต 1 สำหรับการแสดงผลทันที
+        currentSetCount = 1; // เริ่มต้นที่เซ็ต 1 สำหรับการแสดงผลเมื่อกดเริ่ม
         remainingTime = initialSetDuration;
         updateTimerDisplay(); // อัปเดตการแสดงผลทันทีหลังกำหนดค่าเริ่มต้น
     }
     
-    // หากถูกหยุดชั่วคราว ให้ใช้เวลาที่เหลืออยู่ (ไม่ต้องปรับ remainingTime)
-    // แต่ถ้าไม่ใช่การหยุดชั่วคราวและ remainingTime เป็น 0 (หมายถึงเซ็ตก่อนหน้าจบไปแล้ว) 
-    // เราจะให้ remainingTime ถูกตั้งค่าโดยการตรวจจับใน `if (remainingTime <= 0)` ใน setInterval
-    // จึงไม่จำเป็นต้องเซ็ต remainingTime = initialSetDuration ตรงนี้ซ้ำอีก
-    
     timerActive = true;
     isPaused = false;
 
+    // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = true;
     pauseButton.disabled = false;
     resetTimerButton.disabled = false;
     setDurationInput.disabled = true;
     totalSetsInput.disabled = true;
 
-    // *** updateTimerDisplay() ถูกเรียกไปแล้วด้านบนสำหรับเริ่มเซ็ตแรก ***
-    // *** และจะถูกเรียกภายใน setInterval ด้วย ***
-
     timerInterval = setInterval(() => {
         remainingTime--;
-        updateTimerDisplay();
+        updateTimerDisplay(); // อัปเดตทุกวินาที
 
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
@@ -190,9 +193,9 @@ function startTimer() {
             
             if (currentSetCount < totalSetsToComplete) {
                 // ถ้ายังไม่ครบเซ็ตทั้งหมด:
-                currentSetCount++; // <<<<< เพิ่มจำนวนเซ็ตทันทีที่เวลาหมด
+                currentSetCount++; // เพิ่มจำนวนเซ็ตทันทีที่เวลาหมด
                 remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
-                updateTimerDisplay(); // <<<<< อัปเดตการแสดงผลทันทีเพื่อให้เซ็ตใหม่ปรากฏ
+                updateTimerDisplay(); // อัปเดตการแสดงผลทันทีเพื่อให้เซ็ตใหม่ปรากฏ
                 
                 // ตั้งค่าปุ่มเพื่อรอการกด "เริ่ม" ใหม่
                 startButton.disabled = false; 
@@ -202,7 +205,6 @@ function startTimer() {
             } else {
                 // ครบทุกเซ็ตแล้ว
                 alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
-                // ตั้งค่าปุ่มเมื่อจบครบทุกเซ็ต
                 resetTimerButton.disabled = false;
                 startButton.disabled = true; 
                 pauseButton.disabled = true;
@@ -226,23 +228,25 @@ function pauseTimer() {
     }
 }
 
+// ฟังก์ชันรีเซ็ตตัวจับเวลาให้เป็นค่าเริ่มต้น
 function resetTimer() {
     clearInterval(timerInterval);
     timerInterval = null;
     timerActive = false;
     isPaused = false;
     
+    // ดึงค่าจาก input ทันทีเมื่อรีเซ็ตเพื่อนำมาแสดงผลเป็นค่าตั้งต้น
+    // ใช้ || เพื่อให้มีค่า default หาก input ว่างหรือเป็น NaN
     initialSetDuration = parseInt(setDurationInput.value) || 60;
     totalSetsToComplete = parseInt(totalSetsInput.value) || 3;
     
-    // currentSetCount = 0; // ถูกต้องแล้ว: เมื่อรีเซ็ต ให้เป็น 0
-    remainingTime = initialSetDuration; // เวลาที่เหลือถูกตั้งเป็นเวลาเริ่มต้น
-    
-    // *** อัปเดตค่า initialSetDuration และ totalSetsToComplete ในหน้าจอทันที ***
-    // currentSetEl.textContent = currentSetCount; // จะแสดง 0
-    // displayTotalSetsEl.textContent = totalSetsToComplete; // แสดงจำนวนเซ็ตทั้งหมด
-    updateTimerDisplay(); // เรียกใช้เพื่อให้ค่า 0/N และเวลาที่ตั้งไว้แสดงผล
+    remainingTime = initialSetDuration;
+    currentSetCount = 0; // สำคัญ: ตั้งเป็น 0 เมื่อรีเซ็ต เพื่อให้แสดง "0 / จำนวนเซ็ตทั้งหมด"
 
+    // อัปเดตหน้าจอด้วยค่าเริ่มต้นใหม่ทันที
+    updateTimerDisplay(); 
+
+    // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = false;
     pauseButton.disabled = true;
     resetTimerButton.disabled = true;
@@ -250,14 +254,19 @@ function resetTimer() {
     totalSetsInput.disabled = false;
 }
 
-// Event Listeners
+// Event Listeners สำหรับปุ่ม Timer
 startButton.addEventListener('click', startTimer);
 pauseButton.addEventListener('click', pauseTimer);
 resetTimerButton.addEventListener('click', resetTimer);
 
-// Initial load
+// Event Listeners สำหรับ input fields เพื่อให้อัปเดตค่า Total Sets ทันที
+// เมื่อมีการเปลี่ยนแปลงค่าในช่อง input ให้เรียก resetTimer เพื่ออัปเดตการแสดงผล
+setDurationInput.addEventListener('input', resetTimer); 
+totalSetsInput.addEventListener('input', resetTimer); 
+
+// เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
 document.addEventListener('DOMContentLoaded', function() {
-    showSection('calendarSection');
-    renderCalendar();
-    resetTimer(); // ให้ Timer แสดงค่าเริ่มต้นทันทีเมื่อเข้าหน้า
+    showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
+    renderCalendar(); // Render ปฏิทินครั้งแรก
+    resetTimer(); // สำคัญ: เรียก resetTimer เพื่อให้ Timer แสดงค่าเริ่มต้นทันทีเมื่อโหลดหน้า
 });
