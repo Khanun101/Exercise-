@@ -159,10 +159,11 @@ function updateTimerDisplay() {
 }
 
 function startTimer() {
-    if (timerActive && !isPaused) return; // ป้องกันการกดเริ่มซ้ำขณะทำงาน
+    // ป้องกันการกดเริ่มซ้ำขณะทำงาน หรือเมื่อหยุดชั่วคราวแต่ไม่ได้กด "เริ่ม" ต่อ
+    if (timerActive && !isPaused) return; 
 
     // ดึงค่าจาก input เมื่อเริ่ม Timer ครั้งแรก หรือเมื่อมีการเปลี่ยนค่า
-    if (currentSetCount === 0 || initialSetDuration === 0) { // Check if initial setup is needed
+    if (currentSetCount === 0 || totalSetsToComplete === 0) { // ตรวจสอบว่าเป็นการเริ่มครั้งแรก
         initialSetDuration = parseInt(setDurationInput.value);
         totalSetsToComplete = parseInt(totalSetsInput.value);
 
@@ -173,27 +174,25 @@ function startTimer() {
             return;
         }
         currentSetCount = 1; // เริ่มต้นที่เซ็ต 1
-        remainingTime = initialSetDuration;
-    } else if (!isPaused) { // If not paused, and not initial start (meaning previous set just finished)
-        // This block handles automatic progression to the next set.
-        // remainingTime is already set to initialSetDuration at the end of the previous set.
+        remainingTime = initialSetDuration; // ตั้งเวลาเริ่มต้นสำหรับเซ็ตแรก
+    } else if (!isPaused && remainingTime === 0) { // กรณีเซ็ตก่อนหน้าจบแล้ว และไม่ได้กดหยุดชั่วคราว
+        // ไม่ต้องทำอะไรตรงนี้ เพราะค่าจะถูกเซ็ตเมื่อเซ็ตจบ
     }
     
     // หากถูกหยุดชั่วคราว ให้ใช้เวลาที่เหลืออยู่
     if (isPaused) {
         // เวลา remainingTime ยังคงเป็นค่าที่หยุดไว้
-    } else {
-        // ถ้าเป็นการเริ่มเซ็ตใหม่ (หรือเริ่มครั้งแรก) ให้ตั้งเวลาเต็ม
-        remainingTime = initialSetDuration;
+    } else if (remainingTime === 0 && currentSetCount > 0) { // กรณีที่เซ็ตจบไปแล้วและกำลังจะเริ่มเซ็ตใหม่
+        remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
     }
-
+    
     timerActive = true;
     isPaused = false;
 
     // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = true;
     pauseButton.disabled = false;
-    resetTimerButton.disabled = false; // เปิดปุ่ม Reset ให้กดได้ตลอด
+    resetTimerButton.disabled = false; 
     setDurationInput.disabled = true;
     totalSetsInput.disabled = true;
 
@@ -206,7 +205,7 @@ function startTimer() {
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
             timerInterval = null; // เคลียร์ interval
-            timerActive = false; // ตัวจับเวลาหยุดชั่วคราว (แต่จะเริ่มใหม่ทันทีถ้ายังไม่ครบเซ็ต)
+            timerActive = false; // ตัวจับเวลาหยุด
 
             // เล่นเสียงแจ้งเตือน (สามารถเพิ่มได้ถ้าต้องการ)
             // const audio = new Audio('path/to/your/sound.mp3');
@@ -215,16 +214,23 @@ function startTimer() {
             alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
             
             if (currentSetCount < totalSetsToComplete) {
-                // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เพิ่มเซ็ตและเริ่มเซ็ตถัดไปทันที
+                // ถ้ายังไม่ครบเซ็ตทั้งหมด ให้เพิ่มเซ็ตและรีเซ็ตเวลา
                 currentSetCount++;
                 remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
-                startTimer(); // เรียก startTimer ซ้ำเพื่อเริ่มเซ็ตถัดไป
+                updateTimerDisplay(); // อัปเดตการแสดงผล
+                
+                // ตั้งค่าปุ่มเพื่อรอการกด "เริ่ม" ใหม่
+                startButton.disabled = false; 
+                pauseButton.disabled = true;
+                resetTimerButton.disabled = false;
+
             } else {
                 // ครบทุกเซ็ตแล้ว
                 alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
-                resetTimerButton.disabled = false; // เปิดปุ่ม Reset หลัก
-                startButton.disabled = true; // ปิดปุ่ม Start
-                pauseButton.disabled = true; // ปิดปุ่ม Pause
+                // ตั้งค่าปุ่มเมื่อจบครบทุกเซ็ต
+                resetTimerButton.disabled = false;
+                startButton.disabled = true; 
+                pauseButton.disabled = true;
                 // หากต้องการให้แสดงเวลาเป็น 00 เมื่อจบครบทุกเซ็ต
                 remainingTime = 0;
                 updateTimerDisplay();
@@ -252,23 +258,20 @@ function resetTimer() {
     timerActive = false;
     isPaused = false;
     
-    remainingTime = 0;
-    currentSetCount = 0;
-    initialSetDuration = 0; // รีเซ็ตค่านี้ด้วย เพื่อให้ดึงจาก input ใหม่เมื่อเริ่ม
-    totalSetsToComplete = 0; // รีเซ็ตจำนวนเซ็ตทั้งหมด
+    // ตั้งค่าเริ่มต้นใหม่ทั้งหมด
+    initialSetDuration = parseInt(setDurationInput.value) || 60; // ใช้ค่าจาก input หรือ 60 เป็น default
+    totalSetsToComplete = parseInt(totalSetsInput.value) || 3; // ใช้ค่าจาก input หรือ 3 เป็น default
+    remainingTime = initialSetDuration; // เวลาเริ่มต้นของเซ็ตแรก
+    currentSetCount = 0; // เริ่มต้นที่ 0 ก่อน เมื่อเริ่มจริงจะเปลี่ยนเป็น 1
 
     // รีเซ็ตปุ่มและ input
     startButton.disabled = false;
     pauseButton.disabled = true;
-    resetTimerButton.disabled = true;
+    resetTimerButton.disabled = true; // ปิดปุ่มรีเซ็ตเมื่อยังไม่เริ่ม
     setDurationInput.disabled = false;
     totalSetsInput.disabled = false;
 
-    // ตั้งค่า Input เป็นค่าเริ่มต้น
-    setDurationInput.value = 60;
-    totalSetsInput.value = 3;
-
-    updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็น 00 และ 0/0
+    updateTimerDisplay(); // อัปเดตการแสดงผลให้เป็นค่าเริ่มต้น
 }
 
 // Event Listeners สำหรับปุ่ม Timer
