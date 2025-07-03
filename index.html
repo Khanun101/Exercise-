@@ -3,59 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบออกกำลังกายส่วนตัว</title>
+    <title>ปฏิทินออกกำลังกาย</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header>
-        <h1>ระบบออกกำลังกายส่วนตัว</h1>
-        <div class="menu-icon" id="menuIcon">
-            &#9776; </div>
-        <nav id="mainMenu">
-            <ul>
-                <li><a href="#" data-section="calendarSection">ปฏิทินออกกำลังกาย</a></li>
-                <li><a href="#" data-section="timerSection">ตัวจับเวลา</a></li>
-            </ul>
-        </nav>
-    </header>
+    <div class="container">
+        <header>
+            <h1>ปฏิทินออกกำลังกายของฉัน</h1>
+            <div class="hamburger-menu">
+                &#9776; </div>
+        </header>
 
-    <main>
-        <section id="calendarSection" class="active">
-            <h2>ปฏิทินการออกกำลังกาย</h2>
-            <div class="calendar-nav">
-                <button id="prevMonthBtn">&#9664; ก่อนหน้า</button>
-                <h3 id="currentMonthYear"></h3>
-                <button id="nextMonthBtn">ถัดไป &#9654;</button>
+        <section class="calendar-section">
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <h2 id="currentMonthYear"></h2>
+                <button id="nextMonth">&gt;</button>
             </div>
-            <div id="calendar-grid"></div>
-            <p class="summary">รวมวันที่ออกกำลังกายไปแล้ว: <span id="totalWorkoutDays">0</span> วัน</p>
+            <div class="calendar-grid">
+                <div class="day-name">อาทิตย์</div>
+                <div class="day-name">จันทร์</div>
+                <div class="day-name">อังคาร</div>
+                <div class="day-name">พุธ</div>
+                <div class="day-name">พฤหัสบดี</div>
+                <div class="day-name">ศุกร์</div>
+                <div class="day-name">เสาร์</div>
+                </div>
         </section>
 
-        <section id="timerSection" class="hidden">
-            <h2>ตัวจับเวลาการออกกำลังกาย</h2>
+        <section class="workout-details-section">
+            <div class="workout-status">
+                <input type="checkbox" id="workoutCompleted">
+                <label for="workoutCompleted">ออกกำลังกายวันนี้แล้ว!</label>
+            </div>
+            <p class="total-completed-days">จำนวนวันที่ออกกำลังกาย: <span id="completedDaysCount">0</span> วัน</p>
+
+            <hr>
+
+            <h3>ตัวจับเวลาออกกำลังกาย</h3>
             <div class="timer-controls">
-                <label for="setDuration">เวลาต่อเซ็ต (วินาที):</label>
-                <input type="number" id="setDuration" value="60" min="1">
-                <label for="totalSets">จำนวนเซ็ตทั้งหมด:</label>
-                <input type="number" id="totalSets" value="3" min="1">
-                <div class="button-group">
-                    <button id="startButton">เริ่ม</button>
-                    <button id="pauseButton" disabled>หยุดชั่วคราว</button>
-                    <button id="resetTimerButton" disabled>รีเซ็ต</button>
+                <label for="setTime">เวลาต่อเซ็ต (วินาที):</label>
+                <input type="number" id="setTime" value="60" min="1">
+                <label for="totalSets">จำนวนเซ็ต:</label>
+                <input type="number" id="totalSets" value="5" min="1">
+                <p class="current-set-display">เซ็ตที่: <span id="currentSet">0</span> / <span id="displayTotalSets">0</span></p>
+                <div class="timer-display">
+                    <span id="minutes">00</span>:<span id="seconds">00</span>
+                </div>
+                <div class="timer-buttons">
+                    <button id="startTimer">เริ่ม</button>
+                    <button id="pauseTimer">หยุด</button>
+                    <button id="resetTimer">รีเซ็ต</button>
                 </div>
             </div>
-            <div class="timer-display">
-                <p>เวลาปัจจุบัน: <span id="currentTime">00</span></p>
-                <p>เซ็ตที่: <span id="currentSet">0</span> / <span id="displayTotalSets">0</span></p>
-            </div>
         </section>
-    </main>
+    </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <script src="script.js" type="module"></script>
-</body>
+    <script type="module" src="script.js"></script>
+    </body>
 </html>
+
