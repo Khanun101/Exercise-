@@ -200,30 +200,26 @@ document.addEventListener('DOMContentLoaded', () => {
         displayTargetSetsSpan.textContent = targetSets;
 
         // เปิด/ปิดปุ่มรีเซ็ตเซ็ต
-        if (completedSets > 0 || (completedSets === targetSets && targetSets > 0)) {
-            resetSetsBtn.disabled = false;
-        } else {
-            resetSetsBtn.disabled = true;
-        }
+        resetSetsBtn.disabled = (completedSets === 0);
 
-        // หากทำครบเซ็ตเป้าหมายแล้ว ให้ตั้งค่า UI และปุ่มให้เหมาะสม
+        // จัดการสถานะปุ่ม Start/Stop และข้อความแสดงผล
         if (completedSets >= targetSets && targetSets > 0) {
             timerDisplay.textContent = "DONE!";
-            startTimerBtn.disabled = true; // ปิดปุ่มเริ่ม
-            stopTimer(); // ตรวจสอบให้แน่ใจว่าหยุดแล้ว
+            startTimerBtn.disabled = true;
+            stopTimerBtn.disabled = true; // เมื่อทำครบแล้ว ปุ่มหยุดไม่ควรใช้งาน
         } else {
-            // ถ้ายังไม่ครบ ให้เปิดปุ่มเริ่ม
-            // startTimerBtn.disabled จะถูกจัดการเมื่อจับเวลาหยุดเองใน setInterval
-            if (!timerInterval) { // ถ้า Timer ไม่ได้กำลังทำงานอยู่ ให้เปิดปุ่มเริ่ม
-                 startTimerBtn.disabled = false;
+            // ถ้ายังไม่ครบ และ Timer ไม่ได้กำลังทำงานอยู่ (เช่น เพิ่งโหลดหน้า, หรือเซ็ตก่อนหน้าเพิ่งจบ)
+            if (!timerInterval) {
+                startTimerBtn.disabled = false;
             }
+            stopTimerBtn.disabled = true; // ปุ่มหยุดควรถูกปิดใช้งานเมื่อไม่มี Timer ทำงานอยู่
         }
     }
 
     function startTimer() {
         requestNotificationPermission();
 
-        // ถ้าเวลาหมดแล้ว หรือทำครบเซ็ตแล้ว ให้ตั้งค่าเวลาเริ่มต้นใหม่
+        // ถ้าเวลาหมด หรือเพิ่งเริ่มต้น หรือทำครบเซ็ตแล้ว ให้ตั้งเวลาเริ่มต้นใหม่
         if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
             remainingTime = initialTimerDuration;
         }
@@ -233,7 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Disable ปุ่ม Start และ Enable ปุ่ม Stop/Reset
         startTimerBtn.disabled = true;
         stopTimerBtn.disabled = false;
-        resetTimerBtn.disabled = false;
+        resetTimerBtn.disabled = false; // รีเซ็ตเวลาควรใช้งานได้เสมอเมื่อจับเวลาอยู่
+
+        updateTimerDisplay(); // อัปเดตเวลาทันทีที่เริ่ม
 
         timerInterval = setInterval(() => {
             if (remainingTime > 0) {
@@ -245,34 +243,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // เพิ่มจำนวนเซ็ตที่ทำได้ หากยังไม่ครบเป้าหมาย
                 if (completedSets < targetSets) {
-                    completedSets++;
+                    completedSets++; // นับ 1 เซ็ต
                     saveTimerState();
-                    showTimerNotification(`Set ${completedSets} completed!`); // แจ้งเตือนเมื่อแต่ละเซ็ตเสร็จสิ้น
+                    showTimerNotification(`Set ${completedSets} completed!`);
                 }
                 
-                // อัปเดตการแสดงผลเซ็ตก่อน
+                // อัปเดตการแสดงผลเซ็ตและปุ่มต่างๆ
                 updateSetDisplay(); 
 
-                // ตรวจสอบว่าครบเซ็ตเป้าหมายแล้วหรือไม่
+                // ตรวจสอบสถานะหลังจากอัปเดตเซ็ต
                 if (completedSets >= targetSets && targetSets > 0) {
-                    // ถ้าครบแล้ว ให้แสดง "DONE!" และปิดปุ่มเริ่ม
-                    // timerDisplay.textContent = "DONE!" และ startTimerBtn.disabled = true; ถูกจัดการใน updateSetDisplay แล้ว
-                    showTimerNotification(`Congratulations! All ${targetSets} sets completed!`); // แจ้งเตือนเมื่อครบทุกเซ็ต
+                    // ถ้าครบเซ็ตเป้าหมายแล้ว: แสดง DONE! และปิดปุ่มเริ่ม (จัดการใน updateSetDisplay)
+                    // ปุ่มหยุดก็ปิด (จัดการใน updateSetDisplay)
                 } else {
-                    // ถ้ายังไม่ครบ ให้รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
+                    // ถ้ายังไม่ครบ: รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
                     remainingTime = initialTimerDuration;
                     updateTimerDisplay(); // อัปเดต display ให้เป็นเวลาเริ่มต้นของเซ็ตถัดไป
                     startTimerBtn.disabled = false; // เปิดปุ่มเริ่มสำหรับเซ็ตถัดไป
                 }
-
-                stopTimerBtn.disabled = true; // ปุ่มหยุดควรถูกปิดใช้งานเมื่อจับเวลาสิ้นสุดรอบ
-                resetTimerBtn.disabled = false; // ปุ่มรีเซ็ตเวลายังคงใช้งานได้
+                // ปุ่ม Stop และ Reset Timer ถูกจัดการใน updateSetDisplay และฟังก์ชัน stopTimer
+                stopTimerBtn.disabled = true; // เมื่อจับเวลาสิ้นสุดรอบ ปุ่มหยุดควรถูกปิดใช้งาน
             }
         }, 1000); // ทุก 1 วินาที
     }
 
     function stopTimer() {
         clearInterval(timerInterval);
+        timerInterval = null; // ตั้งค่าให้เป็น null เพื่อบ่งบอกว่าไม่มี interval ทำงานอยู่
         startTimerBtn.disabled = false;
         stopTimerBtn.disabled = true;
         resetTimerBtn.disabled = false;
@@ -282,9 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stopTimer();
         remainingTime = initialTimerDuration;
         updateTimerDisplay();
-        startTimerBtn.disabled = false;
-        stopTimerBtn.disabled = true;
-        resetTimerBtn.disabled = false;
+        // ปุ่ม Start/Stop/Reset จะถูกจัดการใน stopTimer() และ updateSetDisplay()
     }
 
     function resetSets() {
@@ -318,11 +313,11 @@ document.addEventListener('DOMContentLoaded', () => {
         timerDurationInput.value = initialTimerDuration;
         targetSetsInput.value = targetSets;
 
-        // ตั้งเวลาที่เหลือให้เป็นค่าเริ่มต้นของเซ็ตปัจจุบัน หรือเป็น 0 ถ้าครบแล้ว เพื่อให้ updateTimerDisplay แสดงผลถูกต้อง
+        // กำหนด remainingTime ให้ถูกต้องตามสถานะ completedSets
         if (completedSets >= targetSets && targetSets > 0) {
-            remainingTime = 0; // เพื่อให้ updateSetDisplay ตั้งค่าเป็น "DONE!" ได้
+            remainingTime = 0; // ถ้าทำครบแล้ว ให้เวลาเป็น 0 เพื่อแสดง DONE!
         } else {
-            remainingTime = initialTimerDuration;
+            remainingTime = initialTimerDuration; // ถ้ายังไม่ครบ ให้เป็นเวลาเริ่มต้นของเซ็ต
         }
         
         updateTimerDisplay();
@@ -373,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             saveTimerState();
             updateSetDisplay();
-            // ถ้าเปลี่ยนเป้าหมายแล้วทำให้ครบเป้าหมายพอดี ให้จัดการสถานะ "DONE!"
+            // ตรวจสอบสถานะปุ่มหลังจากเปลี่ยนเป้าหมาย
             if (completedSets >= targetSets && targetSets > 0) {
                 stopTimer(); // ตรวจสอบให้แน่ใจว่าหยุด
                 timerDisplay.textContent = "DONE!";
