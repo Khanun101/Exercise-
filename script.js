@@ -1,24 +1,12 @@
-// ====== ส่วนของ Firebase Initialization ======
-import { initializeApp } from "firebase/app";
-// import { getAnalytics } from "firebase/analytics"; // ไม่ได้ใช้ใน Logic นี้ แต่ถ้าต้องการเก็บ Analytics สามารถเปิดใช้งานได้
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions
+// ====== ส่วนของ Supabase Initialization ======
+// ไม่ต้องใช้ import statements ที่ด้านบนสุดแล้ว เพราะใช้ CDN ใน index.html
+// const { createClient } = supabase; // นี่คือวิธีดึง client ถ้าใช้ CDN
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyD5k1WWroGpelDNxkAA8_1Tn-AkqsgxtaQ",
-  authDomain: "exercise-f7e39.firebaseapp.com",
-  projectId: "exercise-f7e39",
-  storageBucket: "exercise-f7e39.firebasestorage.app",
-  messagingSenderId: "646977184855",
-  appId: "1:646977184855:web:2cc71703d3a694bfaeaf12",
-  measurementId: "G-FKJX868XKQ" // คุณสามารถลบออกได้หากไม่ต้องการใช้ Google Analytics
-};
+// Your Supabase configuration (นำมาจาก Supabase Dashboard ของคุณ)
+const SUPABASE_URL = "https://xoscoszdlzchwyisvxbp.supabase.co"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY"; 
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-// const analytics = getAnalytics(app); // ถ้าต้องการใช้ Analytics
-// Initialize Cloud Firestore and get a reference to the service
-const db = getFirestore(app);
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // ==========================================================
 
 // --- ส่วนควบคุมการแสดงผลส่วนต่างๆ (เมนูและ Section) ---
@@ -65,43 +53,56 @@ const currentMonthYearEl = document.getElementById('currentMonthYear');
 const totalWorkoutDaysEl = document.getElementById('totalWorkoutDays');
 
 let currentCalendarDate = new Date();
-// เราจะไม่ใช้ localStorage.getItem('workoutDays') อีกต่อไป
-// แต่จะดึงข้อมูลจาก Firestore เมื่อ renderCalendar ถูกเรียก
 
-// *** สำคัญ: ID ผู้ใช้สำหรับเก็บข้อมูลใน Firestore ***
+// *** สำคัญ: ID ผู้ใช้สำหรับเก็บข้อมูลใน Supabase ***
 // ในตอนนี้เราใช้ ID แบบตายตัว "user1"
-// ถ้าต้องการหลายผู้ใช้ ต้องใช้ Firebase Authentication เพื่อได้ UID ของผู้ใช้จริง
+// ถ้าต้องการหลายผู้ใช้ ต้องใช้ Supabase Authentication เพื่อได้ UID ของผู้ใช้จริง
 const USER_ID = "user1"; 
 
-// ฟังก์ชันสำหรับดึงข้อมูลวันที่ออกกำลังกายจาก Firestore
+// ฟังก์ชันสำหรับดึงข้อมูลวันที่ออกกำลังกายจาก Supabase
 async function fetchWorkoutDays() {
     try {
-        const docRef = doc(db, "users", USER_ID); // อ้างอิงถึงเอกสารของผู้ใช้นี้ใน collection 'users'
-        const docSnap = await getDoc(docRef); // ดึงข้อมูลเอกสาร
+        // ดึงข้อมูลจากตาราง 'user_workouts' ที่มี 'user_id' ตรงกับ USER_ID
+        // เลือกคอลัมน์ 'workout_dates'
+        let { data, error } = await supabase
+            .from('user_workouts')
+            .select('workout_dates')
+            .eq('user_id', USER_ID) // กรองข้อมูลตาม user_id
+            .single(); // คาดหวังว่าจะมีแค่ 1 row สำหรับ user นี้
 
-        if (docSnap.exists()) {
-            // ถ้าเอกสารมีอยู่ ให้ส่งคืนข้อมูลในฟิลด์ 'workoutDates'
-            // ถ้าไม่มีฟิลด์ 'workoutDates' ให้คืนค่าเป็น Object ว่างเปล่า
-            return docSnap.data().workoutDates || {}; 
+        // Supabase จะคืน error.code 'PGRST116' ถ้าไม่พบ row (ซึ่งปกติสำหรับ user ใหม่)
+        if (error && error.code !== 'PGRST116') { 
+            throw error;
+        }
+
+        if (data) {
+            // ถ้ามีข้อมูล ให้คืนค่าในฟิลด์ 'workout_dates' (ซึ่งเป็น jsonb)
+            return data.workout_dates || {}; 
         } else {
-            console.log("No workout data found for this user in Firestore. Starting fresh.");
+            console.log("No workout data found for this user in Supabase. Starting fresh.");
             return {}; // ไม่มีข้อมูล ให้คืนค่าเป็น Object ว่างเปล่า
         }
     } catch (error) {
-        console.error("Error fetching workout days from Firestore:", error);
+        console.error("Error fetching workout days from Supabase:", error.message);
         return {}; // คืนค่าว่างเปล่าหากเกิดข้อผิดพลาด
     }
 }
 
-// ฟังก์ชันสำหรับบันทึกข้อมูลวันที่ออกกำลังกายไปยัง Firestore
+// ฟังก์ชันสำหรับบันทึกข้อมูลวันที่ออกกำลังกายไปยัง Supabase
 async function saveWorkoutDays(data) {
     try {
-        // ใช้ setDoc เพื่อบันทึกข้อมูลในฟิลด์ 'workoutDates' ของเอกสารผู้ใช้
-        // { merge: true } จะอัปเดตเฉพาะฟิลด์ 'workoutDates' โดยไม่ลบฟิลด์อื่นในเอกสาร
-        await setDoc(doc(db, "users", USER_ID), { workoutDates: data }, { merge: true });
-        console.log("Workout days saved to Firestore successfully!");
+        // ใช้ upsert เพื่ออัปเดตถ้ามี user_id นี้อยู่แล้ว หรือ insert ถ้ายังไม่มี
+        // { onConflict: 'user_id' } บอกว่าถ้ามี user_id นี้อยู่แล้ว ให้อัปเดต row นั้น
+        const { error } = await supabase
+            .from('user_workouts')
+            .upsert({ user_id: USER_ID, workout_dates: data }, { onConflict: 'user_id' });
+
+        if (error) {
+            throw error;
+        }
+        console.log("Workout days saved to Supabase successfully!");
     } catch (error) {
-        console.error("Error saving workout days to Firestore:", error);
+        console.error("Error saving workout days to Supabase:", error.message);
     }
 }
 
@@ -133,8 +134,8 @@ async function renderCalendar() {
         html += `<div class="day-cell empty"></div>`;
     }
 
-    // *** ดึงข้อมูลจาก Firestore ก่อน Render ***
-    const workoutDaysFromFirestore = await fetchWorkoutDays(); 
+    // *** ดึงข้อมูลจาก Supabase ก่อน Render ***
+    const workoutDaysFromSupabase = await fetchWorkoutDays(); 
     let totalCheckedDays = 0;
     const today = new Date();
     const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
@@ -147,8 +148,8 @@ async function renderCalendar() {
             classes += ' today';
         }
 
-        // ตรวจสอบกับข้อมูลที่ดึงมาจาก Firestore
-        if (workoutDaysFromFirestore[dateString]) {
+        // ตรวจสอบกับข้อมูลที่ดึงมาจาก Supabase
+        if (workoutDaysFromSupabase[dateString]) {
             classes += ' checked';
             totalCheckedDays++;
         }
@@ -167,7 +168,7 @@ async function renderCalendar() {
     document.querySelectorAll('#calendar-grid .day-cell:not(.empty)').forEach(cell => {
         cell.addEventListener('click', async function() { // เปลี่ยนเป็น async function
             const date = this.dataset.date;
-            // ดึงข้อมูลปัจจุบันจาก Firestore ก่อนแก้ไข
+            // ดึงข้อมูลปัจจุบันจาก Supabase ก่อนแก้ไข
             let currentWorkoutDays = await fetchWorkoutDays();
 
             if (currentWorkoutDays[date]) {
@@ -176,7 +177,7 @@ async function renderCalendar() {
                 currentWorkoutDays[date] = true; // ติ๊กถูก
             }
             
-            // บันทึกข้อมูลที่แก้ไขแล้วกลับไปยัง Firestore
+            // บันทึกข้อมูลที่แก้ไขแล้วกลับไปยัง Supabase
             await saveWorkoutDays(currentWorkoutDays);
             renderCalendar(); // อัปเดตปฏิทินอีกครั้งเพื่อแสดงผลลัพธ์
         });
@@ -188,7 +189,7 @@ function changeMonth(delta) {
     renderCalendar();
 }
 
-// --- ส่วนตัวจับเวลา (ยังคงเหมือนเดิม เพราะไม่เกี่ยวกับ database โดยตรง) ---
+// --- ส่วนตัวจับเวลา (ยังคงเหมือนเดิม) ---
 const setDurationInput = document.getElementById('setDuration');
 const totalSetsInput = document.getElementById('totalSets');
 const startButton = document.getElementById('startButton');
@@ -206,16 +207,13 @@ let totalSetsToComplete;
 let timerActive = false;
 let isPaused = false;
 
-// ฟังก์ชันสำหรับอัปเดตการแสดงผลของตัวจับเวลา
 function updateTimerDisplay() {
-    // ตรวจสอบให้แน่ใจว่า element มีอยู่จริงก่อนอัปเดต
     if (!currentTimeEl || !currentSetEl || !displayTotalSetsEl) {
         console.error("Error: Timer display elements not found in HTML!");
         return;
     }
 
     currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
-    // ตรวจสอบให้แน่ใจว่า currentSetCount เป็นตัวเลขก่อนแสดงผล
     currentSetEl.textContent = currentSetCount !== undefined && currentSetCount !== null ? currentSetCount : ''; 
     displayTotalSetsEl.textContent = totalSetsToComplete !== undefined && totalSetsToComplete !== null ? totalSetsToComplete : '';
 }
@@ -223,28 +221,24 @@ function updateTimerDisplay() {
 function startTimer() {
     if (timerActive && !isPaused) return;
 
-    // ดึงค่าจาก input เมื่อเริ่ม Timer ครั้งแรก หรือเมื่อมีการเปลี่ยนค่าหลังจากรีเซ็ต
-    // ตรวจสอบว่า currentSetCount เป็น 0 หรือยังไม่ได้กำหนดค่าเริ่มต้น
     if (currentSetCount === 0 || initialSetDuration === undefined || totalSetsToComplete === undefined) {
         initialSetDuration = parseInt(setDurationInput.value);
         totalSetsToComplete = parseInt(totalSetsInput.value);
 
-        // ตรวจสอบความถูกต้องของค่าที่ป้อน
         if (isNaN(initialSetDuration) || initialSetDuration <= 0 ||
             isNaN(totalSetsToComplete) || totalSetsToComplete <= 0) {
             alert("กรุณากำหนดเวลาและจำนวนเซ็ตที่มากกว่า 0 ให้ถูกต้อง!");
-            resetTimer(); // รีเซ็ตหากค่าไม่ถูกต้อง
+            resetTimer(); 
             return;
         }
-        currentSetCount = 1; // เริ่มต้นที่เซ็ต 1 สำหรับการแสดงผลเมื่อกดเริ่ม
+        currentSetCount = 1; 
         remainingTime = initialSetDuration;
-        updateTimerDisplay(); // อัปเดตการแสดงผลทันทีหลังกำหนดค่าเริ่มต้น
+        updateTimerDisplay(); 
     }
     
     timerActive = true;
     isPaused = false;
 
-    // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = true;
     pauseButton.disabled = false;
     resetTimerButton.disabled = false;
@@ -253,7 +247,7 @@ function startTimer() {
 
     timerInterval = setInterval(() => {
         remainingTime--;
-        updateTimerDisplay(); // อัปเดตทุกวินาที
+        updateTimerDisplay(); 
 
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
@@ -263,23 +257,20 @@ function startTimer() {
             alert(`เซ็ตที่ ${currentSetCount} จบแล้ว!`); 
             
             if (currentSetCount < totalSetsToComplete) {
-                // ถ้ายังไม่ครบเซ็ตทั้งหมด:
-                currentSetCount++; // เพิ่มจำนวนเซ็ตทันทีที่เวลาหมด
-                remainingTime = initialSetDuration; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
-                updateTimerDisplay(); // อัปเดตการแสดงผลทันทีเพื่อให้เซ็ตใหม่ปรากฏ
+                currentSetCount++; 
+                remainingTime = initialSetDuration; 
+                updateTimerDisplay(); 
                 
-                // ตั้งค่าปุ่มเพื่อรอการกด "เริ่ม" ใหม่
                 startButton.disabled = false; 
                 pauseButton.disabled = true;
                 resetTimerButton.disabled = false;
 
             } else {
-                // ครบทุกเซ็ตแล้ว
                 alert("เยี่ยมมาก! คุณทำครบทุกเซ็ตแล้ว!");
                 resetTimerButton.disabled = false;
                 startButton.disabled = true; 
                 pauseButton.disabled = true;
-                remainingTime = 0; // แสดงเวลาเป็น 00 เมื่อจบครบทุกเซ็ต
+                remainingTime = 0; 
                 updateTimerDisplay();
             }
         }
@@ -299,25 +290,20 @@ function pauseTimer() {
     }
 }
 
-// ฟังก์ชันรีเซ็ตตัวจับเวลาให้เป็นค่าเริ่มต้น
 function resetTimer() {
     clearInterval(timerInterval);
     timerInterval = null;
     timerActive = false;
     isPaused = false;
     
-    // ดึงค่าจาก input ทันทีเมื่อรีเซ็ตเพื่อนำมาแสดงผลเป็นค่าตั้งต้น
-    // ใช้ || เพื่อให้มีค่า default หาก input ว่างหรือเป็น NaN
     initialSetDuration = parseInt(setDurationInput.value) || 60;
     totalSetsToComplete = parseInt(totalSetsInput.value) || 3;
     
     remainingTime = initialSetDuration;
-    currentSetCount = 0; // สำคัญ: ตั้งเป็น 0 เมื่อรีเซ็ต เพื่อให้แสดง "0 / จำนวนเซ็ตทั้งหมด"
+    currentSetCount = 0; 
 
-    // อัปเดตหน้าจอด้วยค่าเริ่มต้นใหม่ทันที
     updateTimerDisplay(); 
 
-    // ตั้งค่าสถานะปุ่มและ input
     startButton.disabled = false;
     pauseButton.disabled = true;
     resetTimerButton.disabled = true;
@@ -325,19 +311,13 @@ function resetTimer() {
     totalSetsInput.disabled = false;
 }
 
-// Event Listeners สำหรับปุ่ม Timer
 startButton.addEventListener('click', startTimer);
 pauseButton.addEventListener('click', pauseTimer);
 resetTimerButton.addEventListener('click', resetTimer);
 
-// Event Listeners สำหรับ input fields เพื่อให้อัปเดตค่า Total Sets ทันที
-// เมื่อมีการเปลี่ยนแปลงค่าในช่อง input ให้เรียก resetTimer เพื่ออัปเดตการแสดงผล
 setDurationInput.addEventListener('input', resetTimer); 
 totalSetsInput.addEventListener('input', resetTimer); 
 
-// เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
 document.addEventListener('DOMContentLoaded', function() {
-    showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
-    // renderCalendar() จะถูกเรียกใน showSection('calendarSection')
-    // resetTimer() จะถูกเรียกใน showSection('timerSection')
+    showSection('calendarSection'); 
 });
