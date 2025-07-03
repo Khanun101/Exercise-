@@ -1,3 +1,26 @@
+// ====== ส่วนของ Firebase Initialization ======
+import { initializeApp } from "firebase/app";
+// import { getAnalytics } from "firebase/analytics"; // ไม่ได้ใช้ใน Logic นี้ แต่ถ้าต้องการเก็บ Analytics สามารถเปิดใช้งานได้
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore"; // Import Firestore functions
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyD5k1WWroGpelDNxkAA8_1Tn-AkqsgxtaQ",
+  authDomain: "exercise-f7e39.firebaseapp.com",
+  projectId: "exercise-f7e39",
+  storageBucket: "exercise-f7e39.firebasestorage.app",
+  messagingSenderId: "646977184855",
+  appId: "1:646977184855:web:2cc71703d3a694bfaeaf12",
+  measurementId: "G-FKJX868XKQ" // คุณสามารถลบออกได้หากไม่ต้องการใช้ Google Analytics
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app); // ถ้าต้องการใช้ Analytics
+// Initialize Cloud Firestore and get a reference to the service
+const db = getFirestore(app);
+// ==========================================================
+
 // --- ส่วนควบคุมการแสดงผลส่วนต่างๆ (เมนูและ Section) ---
 let currentVisibleSection = 'calendarSection';
 
@@ -30,21 +53,59 @@ function showSection(sectionId) {
     }
 
     if (sectionId === 'calendarSection') {
-        renderCalendar();
+        renderCalendar(); // เรียก renderCalendar เพื่อแสดงปฏิทินเมื่อเปลี่ยน Section
     } else if (sectionId === 'timerSection') {
-        resetTimer(); // สำคัญ: รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer เพื่อตั้งค่าเริ่มต้น
+        resetTimer(); // รีเซ็ต Timer เมื่อเข้าสู่หน้า Timer
     }
 }
 
-// --- ส่วนปฏิทิน (ไม่มีการเปลี่ยนแปลง) ---
+// --- ส่วนปฏิทิน ---
 const calendarGridEl = document.getElementById('calendar-grid');
 const currentMonthYearEl = document.getElementById('currentMonthYear');
 const totalWorkoutDaysEl = document.getElementById('totalWorkoutDays');
 
 let currentCalendarDate = new Date();
-let workoutDays = JSON.parse(localStorage.getItem('workoutDays')) || {};
+// เราจะไม่ใช้ localStorage.getItem('workoutDays') อีกต่อไป
+// แต่จะดึงข้อมูลจาก Firestore เมื่อ renderCalendar ถูกเรียก
 
-function renderCalendar() {
+// *** สำคัญ: ID ผู้ใช้สำหรับเก็บข้อมูลใน Firestore ***
+// ในตอนนี้เราใช้ ID แบบตายตัว "user1"
+// ถ้าต้องการหลายผู้ใช้ ต้องใช้ Firebase Authentication เพื่อได้ UID ของผู้ใช้จริง
+const USER_ID = "user1"; 
+
+// ฟังก์ชันสำหรับดึงข้อมูลวันที่ออกกำลังกายจาก Firestore
+async function fetchWorkoutDays() {
+    try {
+        const docRef = doc(db, "users", USER_ID); // อ้างอิงถึงเอกสารของผู้ใช้นี้ใน collection 'users'
+        const docSnap = await getDoc(docRef); // ดึงข้อมูลเอกสาร
+
+        if (docSnap.exists()) {
+            // ถ้าเอกสารมีอยู่ ให้ส่งคืนข้อมูลในฟิลด์ 'workoutDates'
+            // ถ้าไม่มีฟิลด์ 'workoutDates' ให้คืนค่าเป็น Object ว่างเปล่า
+            return docSnap.data().workoutDates || {}; 
+        } else {
+            console.log("No workout data found for this user in Firestore. Starting fresh.");
+            return {}; // ไม่มีข้อมูล ให้คืนค่าเป็น Object ว่างเปล่า
+        }
+    } catch (error) {
+        console.error("Error fetching workout days from Firestore:", error);
+        return {}; // คืนค่าว่างเปล่าหากเกิดข้อผิดพลาด
+    }
+}
+
+// ฟังก์ชันสำหรับบันทึกข้อมูลวันที่ออกกำลังกายไปยัง Firestore
+async function saveWorkoutDays(data) {
+    try {
+        // ใช้ setDoc เพื่อบันทึกข้อมูลในฟิลด์ 'workoutDates' ของเอกสารผู้ใช้
+        // { merge: true } จะอัปเดตเฉพาะฟิลด์ 'workoutDates' โดยไม่ลบฟิลด์อื่นในเอกสาร
+        await setDoc(doc(db, "users", USER_ID), { workoutDates: data }, { merge: true });
+        console.log("Workout days saved to Firestore successfully!");
+    } catch (error) {
+        console.error("Error saving workout days to Firestore:", error);
+    }
+}
+
+async function renderCalendar() {
     const year = currentCalendarDate.getFullYear();
     const month = currentCalendarDate.getMonth();
     
@@ -56,7 +117,7 @@ function renderCalendar() {
 
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-    const startDayOfWeek = firstDayOfMonth.getDay();
+    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Sunday, 1 = Monday, etc.
 
     let html = `
         <div class="day-header">อา</div>
@@ -72,6 +133,8 @@ function renderCalendar() {
         html += `<div class="day-cell empty"></div>`;
     }
 
+    // *** ดึงข้อมูลจาก Firestore ก่อน Render ***
+    const workoutDaysFromFirestore = await fetchWorkoutDays(); 
     let totalCheckedDays = 0;
     const today = new Date();
     const todayString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
@@ -84,7 +147,8 @@ function renderCalendar() {
             classes += ' today';
         }
 
-        if (workoutDays[dateString]) {
+        // ตรวจสอบกับข้อมูลที่ดึงมาจาก Firestore
+        if (workoutDaysFromFirestore[dateString]) {
             classes += ' checked';
             totalCheckedDays++;
         }
@@ -99,16 +163,22 @@ function renderCalendar() {
     calendarGridEl.innerHTML = html;
     totalWorkoutDaysEl.textContent = totalCheckedDays;
 
+    // เพิ่ม Event Listener ให้แต่ละวัน (ไม่ใช่วันว่าง)
     document.querySelectorAll('#calendar-grid .day-cell:not(.empty)').forEach(cell => {
-        cell.addEventListener('click', function() {
+        cell.addEventListener('click', async function() { // เปลี่ยนเป็น async function
             const date = this.dataset.date;
-            if (workoutDays[date]) {
-                delete workoutDays[date];
+            // ดึงข้อมูลปัจจุบันจาก Firestore ก่อนแก้ไข
+            let currentWorkoutDays = await fetchWorkoutDays();
+
+            if (currentWorkoutDays[date]) {
+                delete currentWorkoutDays[date]; // ยกเลิกติ๊กถูก
             } else {
-                workoutDays[date] = true;
+                currentWorkoutDays[date] = true; // ติ๊กถูก
             }
-            localStorage.setItem('workoutDays', JSON.stringify(workoutDays));
-            renderCalendar();
+            
+            // บันทึกข้อมูลที่แก้ไขแล้วกลับไปยัง Firestore
+            await saveWorkoutDays(currentWorkoutDays);
+            renderCalendar(); // อัปเดตปฏิทินอีกครั้งเพื่อแสดงผลลัพธ์
         });
     });
 }
@@ -118,7 +188,7 @@ function changeMonth(delta) {
     renderCalendar();
 }
 
-// --- ส่วนตัวจับเวลา ---
+// --- ส่วนตัวจับเวลา (ยังคงเหมือนเดิม เพราะไม่เกี่ยวกับ database โดยตรง) ---
 const setDurationInput = document.getElementById('setDuration');
 const totalSetsInput = document.getElementById('totalSets');
 const startButton = document.getElementById('startButton');
@@ -145,8 +215,9 @@ function updateTimerDisplay() {
     }
 
     currentTimeEl.textContent = remainingTime.toString().padStart(2, '0');
-    currentSetEl.textContent = currentSetCount; // อัปเดตค่าเซ็ตปัจจุบัน
-    displayTotalSetsEl.textContent = totalSetsToComplete; // อัปเดตค่าจำนวนเซ็ตทั้งหมด
+    // ตรวจสอบให้แน่ใจว่า currentSetCount เป็นตัวเลขก่อนแสดงผล
+    currentSetEl.textContent = currentSetCount !== undefined && currentSetCount !== null ? currentSetCount : ''; 
+    displayTotalSetsEl.textContent = totalSetsToComplete !== undefined && totalSetsToComplete !== null ? totalSetsToComplete : '';
 }
 
 function startTimer() {
@@ -267,6 +338,6 @@ totalSetsInput.addEventListener('input', resetTimer);
 // เรียกใช้ฟังก์ชันเริ่มต้นเมื่อ DOM โหลดเสร็จ
 document.addEventListener('DOMContentLoaded', function() {
     showSection('calendarSection'); // แสดงปฏิทินเป็นหน้าแรก
-    renderCalendar(); // Render ปฏิทินครั้งแรก
-    resetTimer(); // สำคัญ: เรียก resetTimer เพื่อให้ Timer แสดงค่าเริ่มต้นทันทีเมื่อโหลดหน้า
+    // renderCalendar() จะถูกเรียกใน showSection('calendarSection')
+    // resetTimer() จะถูกเรียกใน showSection('timerSection')
 });
