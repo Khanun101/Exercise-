@@ -12,12 +12,12 @@
 <body>
     <header>
         <h1>ระบบออกกำลังกายส่วนตัว</h1>
-        <div class="menu-icon" onclick="toggleMenu()">
+        <div class="menu-icon" id="menuIcon">
             &#9776; </div>
         <nav id="mainMenu">
             <ul>
-                <li><a href="#" onclick="showSection('calendarSection')">ปฏิทินออกกำลังกาย</a></li>
-                <li><a href="#" onclick="showSection('timerSection')">ตัวจับเวลา</a></li>
+                <li><a href="#" data-section="calendarSection">ปฏิทินออกกำลังกาย</a></li>
+                <li><a href="#" data-section="timerSection">ตัวจับเวลา</a></li>
             </ul>
         </nav>
     </header>
@@ -26,9 +26,9 @@
         <section id="calendarSection" class="active">
             <h2>ปฏิทินการออกกำลังกาย</h2>
             <div class="calendar-nav">
-                <button onclick="changeMonth(-1)">&#9664; ก่อนหน้า</button>
+                <button id="prevMonthBtn">&#9664; ก่อนหน้า</button>
                 <h3 id="currentMonthYear"></h3>
-                <button onclick="changeMonth(1)">ถัดไป &#9654;</button>
+                <button id="nextMonthBtn">ถัดไป &#9654;</button>
             </div>
             <div id="calendar-grid"></div>
             <p class="summary">รวมวันที่ออกกำลังกายไปแล้ว: <span id="totalWorkoutDays">0</span> วัน</p>
@@ -56,6 +56,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <script src="script.js" type="module"></script> 
+    <script src="script.js" type="module"></script>
 </body>
 </html>
