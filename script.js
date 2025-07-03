@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const timerSound = document.getElementById('timerSound'); // Audio element for sound
 
     // --- Calendar State ---
-    let allWorkoutDates = new Set(); // เก็บวันที่ออกกำลังกายทั้งหมดในรูปแบบYYYY-MM-DD
-    let currentDate = new Date(); // วันที่ปัจจุบันที่ใช้ในการแสดงผลปฏิทิน (จะเปลี่ยนเมื่อกดปุ่มเปลี่ยนเดือน)
+    let allWorkoutDates = new Set();
+    let currentDate = new Date();
     let currentYear = currentDate.getFullYear();
-    let currentMonth = currentDate.getMonth(); // 0-11 สำหรับ ม.ค.-ธ.ค.
-    const today = new Date(); // วันที่แท้จริงของวันนี้
-    const todayFormatted = formatDate(today); // วันที่ปัจจุบันในรูปแบบYYYY-MM-DD
+    let currentMonth = currentDate.getMonth();
+    const today = new Date();
+    const todayFormatted = formatDate(today);
 
     const monthNames = [
         "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
@@ -34,11 +34,11 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- Timer State ---
-    let timerInterval; // ตัวแปรสำหรับเก็บ setInterval ID
-    let remainingTime = 0; // เวลาที่เหลือในหน่วยวินาที
-    let initialTimerDuration = 60; // เวลาเริ่มต้นสำหรับแต่ละเซ็ต (วินาที)
-    let completedSets = 0; // จำนวนเซ็ตที่ทำได้
-    let targetSets = 3; // จำนวนเซ็ตเป้าหมาย
+    let timerInterval;
+    let remainingTime = 0;
+    let initialTimerDuration = 60;
+    let completedSets = 0;
+    let targetSets = 3;
 
     // --- Notification State ---
     let notificationPermissionRequested = false; 
@@ -199,32 +199,38 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSetsCountSpan.textContent = completedSets;
         displayTargetSetsSpan.textContent = targetSets;
 
+        // เปิด/ปิดปุ่มรีเซ็ตเซ็ต
         if (completedSets > 0 || (completedSets === targetSets && targetSets > 0)) {
             resetSetsBtn.disabled = false;
         } else {
             resetSetsBtn.disabled = true;
         }
 
+        // หากทำครบเซ็ตเป้าหมายแล้ว ให้ตั้งค่า UI และปุ่มให้เหมาะสม
         if (completedSets >= targetSets && targetSets > 0) {
-            stopTimer();
-            startTimerBtn.disabled = true;
             timerDisplay.textContent = "DONE!";
-            // แจ้งเตือนเมื่อครบทุกเซ็ต จะถูกเรียกใน startTimer() เมื่อเซ็ตสุดท้ายเสร็จ
+            startTimerBtn.disabled = true; // ปิดปุ่มเริ่ม
+            stopTimer(); // ตรวจสอบให้แน่ใจว่าหยุดแล้ว
         } else {
-            startTimerBtn.disabled = false;
+            // ถ้ายังไม่ครบ ให้เปิดปุ่มเริ่ม
+            // startTimerBtn.disabled จะถูกจัดการเมื่อจับเวลาหยุดเองใน setInterval
+            if (!timerInterval) { // ถ้า Timer ไม่ได้กำลังทำงานอยู่ ให้เปิดปุ่มเริ่ม
+                 startTimerBtn.disabled = false;
+            }
         }
     }
 
     function startTimer() {
         requestNotificationPermission();
 
-        // ถ้าเวลาหมด หรือเพิ่งเริ่มต้น ให้รีเซ็ตเวลาสำหรับเซ็ตใหม่
-        if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") { // เพิ่มเงื่อนไข DONE!
+        // ถ้าเวลาหมดแล้ว หรือทำครบเซ็ตแล้ว ให้ตั้งค่าเวลาเริ่มต้นใหม่
+        if (remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
             remainingTime = initialTimerDuration;
         }
         
-        if (timerInterval) clearInterval(timerInterval);
+        if (timerInterval) clearInterval(timerInterval); // เคลียร์ interval เก่าถ้ามี
 
+        // Disable ปุ่ม Start และ Enable ปุ่ม Stop/Reset
         startTimerBtn.disabled = true;
         stopTimerBtn.disabled = false;
         resetTimerBtn.disabled = false;
@@ -234,34 +240,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 remainingTime--;
                 updateTimerDisplay();
             } else { // เวลาของเซ็ตปัจจุบันหมดแล้ว!
-                clearInterval(timerInterval);
-                timerSound.play();
+                clearInterval(timerInterval); // หยุดจับเวลา
+                timerSound.play(); // เล่นเสียงเมื่อเวลาหมด
 
+                // เพิ่มจำนวนเซ็ตที่ทำได้ หากยังไม่ครบเป้าหมาย
                 if (completedSets < targetSets) {
-                    completedSets++; // นับ 1 เซ็ต
+                    completedSets++;
                     saveTimerState();
                     showTimerNotification(`Set ${completedSets} completed!`); // แจ้งเตือนเมื่อแต่ละเซ็ตเสร็จสิ้น
-
-                    // ตรวจสอบว่าครบเซ็ตเป้าหมายแล้วหรือไม่
-                    if (completedSets >= targetSets) {
-                        // ถ้าครบแล้ว ไม่ต้องรีเซ็ตเวลาอัตโนมัติ
-                        timerDisplay.textContent = "DONE!";
-                        showTimerNotification(`Congratulations! All ${targetSets} sets completed!`); // แจ้งเตือนเมื่อครบทุกเซ็ต
-                        stopTimer(); // หยุดเวลา
-                        startTimerBtn.disabled = true; // ปิดปุ่มเริ่ม
-                    } else {
-                        // ถ้ายังไม่ครบ ให้รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
-                        remainingTime = initialTimerDuration;
-                        updateTimerDisplay();
-                        startTimerBtn.disabled = false; // เปิดปุ่มเริ่มสำหรับเซ็ตถัดไป
-                    }
                 }
-                updateSetDisplay(); // อัปเดตการแสดงผลเซ็ต
+                
+                // อัปเดตการแสดงผลเซ็ตก่อน
+                updateSetDisplay(); 
 
-                stopTimerBtn.disabled = true; // หยุดแล้ว ให้ปุ่มหยุด disabled
-                resetTimerBtn.disabled = false; // สามารถรีเซ็ตเวลาได้
+                // ตรวจสอบว่าครบเซ็ตเป้าหมายแล้วหรือไม่
+                if (completedSets >= targetSets && targetSets > 0) {
+                    // ถ้าครบแล้ว ให้แสดง "DONE!" และปิดปุ่มเริ่ม
+                    // timerDisplay.textContent = "DONE!" และ startTimerBtn.disabled = true; ถูกจัดการใน updateSetDisplay แล้ว
+                    showTimerNotification(`Congratulations! All ${targetSets} sets completed!`); // แจ้งเตือนเมื่อครบทุกเซ็ต
+                } else {
+                    // ถ้ายังไม่ครบ ให้รีเซ็ตเวลาสำหรับเซ็ตถัดไปอัตโนมัติ
+                    remainingTime = initialTimerDuration;
+                    updateTimerDisplay(); // อัปเดต display ให้เป็นเวลาเริ่มต้นของเซ็ตถัดไป
+                    startTimerBtn.disabled = false; // เปิดปุ่มเริ่มสำหรับเซ็ตถัดไป
+                }
+
+                stopTimerBtn.disabled = true; // ปุ่มหยุดควรถูกปิดใช้งานเมื่อจับเวลาสิ้นสุดรอบ
+                resetTimerBtn.disabled = false; // ปุ่มรีเซ็ตเวลายังคงใช้งานได้
             }
-        }, 1000);
+        }, 1000); // ทุก 1 วินาที
     }
 
     function stopTimer() {
@@ -285,7 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             completedSets = 0;
             resetTimer(); // รีเซ็ตเวลาด้วย
             saveTimerState();
-            updateSetDisplay();
+            updateSetDisplay(); // อัปเดต UI ให้แสดง 0 เซ็ต
         }
     }
 
@@ -311,15 +318,15 @@ document.addEventListener('DOMContentLoaded', () => {
         timerDurationInput.value = initialTimerDuration;
         targetSetsInput.value = targetSets;
 
-        // ตั้งเวลาที่เหลือให้เป็นค่าเริ่มต้นของเซ็ตปัจจุบัน หรือเป็น 0 ถ้าครบแล้ว
+        // ตั้งเวลาที่เหลือให้เป็นค่าเริ่มต้นของเซ็ตปัจจุบัน หรือเป็น 0 ถ้าครบแล้ว เพื่อให้ updateTimerDisplay แสดงผลถูกต้อง
         if (completedSets >= targetSets && targetSets > 0) {
-            remainingTime = 0; // แสดง DONE!
+            remainingTime = 0; // เพื่อให้ updateSetDisplay ตั้งค่าเป็น "DONE!" ได้
         } else {
             remainingTime = initialTimerDuration;
         }
         
         updateTimerDisplay();
-        updateSetDisplay();
+        updateSetDisplay(); // ต้องเรียกเพื่อตั้งค่าปุ่ม disabled และข้อความ "DONE!" ให้ถูกต้องตั้งแต่โหลด
     }
 
     // --- Event Listeners ---
@@ -345,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const newDuration = parseInt(timerDurationInput.value);
         if (newDuration > 0) {
             initialTimerDuration = newDuration;
-            // ถ้า Timer ไม่ได้กำลังทำงาน หรือเวลาหมด ให้รีเซ็ตเวลาที่แสดงผล
+            // ถ้า Timer ไม่ได้กำลังทำงาน หรือเวลาหมด ให้รีเซ็ตเวลาที่แสดงผลทันที
             if (!timerInterval || remainingTime <= 0 || timerDisplay.textContent === "DONE!") {
                 remainingTime = initialTimerDuration;
                 updateTimerDisplay();
@@ -360,11 +367,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const newTargetSets = parseInt(targetSetsInput.value);
         if (newTargetSets > 0) {
             targetSets = newTargetSets;
+            // ถ้าเซ็ตที่ทำไปแล้วเกินเป้าหมายใหม่ ให้ปรับให้เท่ากับเป้าหมาย
             if (completedSets > targetSets) {
                 completedSets = targetSets;
             }
             saveTimerState();
             updateSetDisplay();
+            // ถ้าเปลี่ยนเป้าหมายแล้วทำให้ครบเป้าหมายพอดี ให้จัดการสถานะ "DONE!"
+            if (completedSets >= targetSets && targetSets > 0) {
+                stopTimer(); // ตรวจสอบให้แน่ใจว่าหยุด
+                timerDisplay.textContent = "DONE!";
+                startTimerBtn.disabled = true;
+            } else if (!timerInterval) { // ถ้าไม่ได้อยู่ในสถานะ DONE และไม่ได้จับเวลาอยู่
+                startTimerBtn.disabled = false; // เปิดปุ่มเริ่ม
+            }
         } else {
             targetSetsInput.value = targetSets;
         }
@@ -385,8 +401,8 @@ document.addEventListener('DOMContentLoaded', () => {
             initialTimerDuration = 60;
             targetSets = 3;
             completedSets = 0;
-            resetTimer();
-            updateSetDisplay();
+            resetTimer(); // รีเซ็ตเวลา
+            updateSetDisplay(); // อัปเดตเซ็ตและปุ่ม
         }
     });
 
