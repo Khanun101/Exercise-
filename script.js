@@ -1,13 +1,10 @@
 // 1. กำหนดค่า Supabase (แทนที่ด้วย Project URL และ Anon Key ของคุณ)
 // **สำคัญมาก: ควรเก็บคีย์เหล่านี้ไว้ใน Environment Variables เมื่อ Deploy จริง**
 //    แต่สำหรับการทดสอบบน localhost, การใส่ตรงๆ แบบนี้ก็ทำได้
-const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co'; // YOUR_SUPABASE_URL
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY'; // YOUR_SUPABASE_ANON_KEY
+const SUPABASE_URL = 'https://xoscoszdlzchwyisvxbp.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhvc2Nvc3pkbHpjaHd5aXN2eGJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1NDIwNzIsImV4cCI6MjA2NzExODA3Mn0.nZhld0oB8vmwvLzwhxhISuD6D-inHP7UVKhYzDfr6KY';
 
 // ตรวจสอบว่า Supabase Client library ถูกโหลดแล้ว
-// ถ้าใช้ <script type="module"> ใน index.html, สามารถ import ได้เลย
-// ถ้ายังไม่ได้เพิ่ม CDN script ใน index.html, ให้เพิ่มในส่วน <head> หรือก่อนปิด </body>:
-// <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -32,7 +29,7 @@ const resetTimerBtn = document.getElementById('resetTimer');
 
 // 3. ตัวแปรสถานะปฏิทิน
 let currentDate = new Date(); // วันที่ปัจจุบัน
-let selectedDate = new Date(); // วันที่ที่ถูกเลือกในปฏิทิน
+let selectedDate = new Date(); // วันที่ที่ถูกเลือกในปฏิทิน (เริ่มต้นที่วันปัจจุบัน)
 let completedWorkouts = {}; // เก็บสถานะวันที่ออกกำลังกายแล้ว { 'YYYY-MM-DD': true }
 
 // 4. ตัวแปรสถานะ Timer
@@ -43,8 +40,8 @@ let currentSet = 0;
 let totalSets = parseInt(totalSetsInput.value); // ดึงค่าเริ่มต้นจาก input
 let defaultSetTime = parseInt(setTimeInput.value); // ดึงค่าเริ่มต้นจาก input
 
-// เสียงแจ้งเตือน
-const notificationSound = new Audio('notification.mp3'); // ต้องมีไฟล์ notification.mp3 ในโฟลเดอร์เดียวกัน
+// เสียงแจ้งเตือน (ต้องมีไฟล์ notification.mp3 ในโฟลเดอร์เดียวกัน)
+const notificationSound = new Audio('notification.mp3');
 
 // --- ฟังก์ชันเกี่ยวกับการจัดการปฏิทิน ---
 
@@ -71,6 +68,9 @@ async function fetchWorkouts() {
 
     if (error) {
         console.error('Error fetching workouts:', error.message);
+        // แสดง alert เฉพาะกรณีที่เป็น error ที่ไม่เกี่ยวกับ RLS (ซึ่ง RLS ควรจะแก้แล้ว)
+        // หรือถ้าอยากให้แสดงก็คงไว้ได้
+        // alert('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาลองใหม่!');
         return;
     }
 
@@ -93,12 +93,11 @@ async function fetchWorkouts() {
  * @param {boolean} isCompleted
  */
 async function updateWorkoutStatus(dateString, isCompleted) {
-    // ตรวจสอบว่ามีข้อมูลสำหรับวันที่นี้อยู่แล้วหรือไม่
     const { data: existingData, error: fetchError } = await supabase
         .from('workouts')
         .select('id')
         .eq('workout_date', dateString)
-        .single(); // ใช้ .single() ถ้าคาดว่ามีแค่ record เดียว
+        .single();
 
     if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = No rows found
         console.error('Error checking existing workout:', fetchError.message);
@@ -108,14 +107,12 @@ async function updateWorkoutStatus(dateString, isCompleted) {
     let error = null;
 
     if (existingData) {
-        // ถ้ามีอยู่แล้ว ให้อัปเดต
         const { error: updateError } = await supabase
             .from('workouts')
             .update({ is_completed: isCompleted })
             .eq('id', existingData.id);
         error = updateError;
     } else {
-        // ถ้ายังไม่มี ให้ insert ใหม่
         const { error: insertError } = await supabase
             .from('workouts')
             .insert({ workout_date: dateString, is_completed: isCompleted });
@@ -127,8 +124,7 @@ async function updateWorkoutStatus(dateString, isCompleted) {
         alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล กรุณาลองใหม่!');
     } else {
         console.log(`Workout for ${dateString} updated to ${isCompleted}`);
-        // อัปเดตสถานะใน local และ render ใหม่
-        completedWorkouts[dateString] = isCompleted;
+        completedWorkouts[dateString] = isCompleted; // อัปเดตสถานะใน local
         fetchWorkouts(); // เรียก fetch อีกครั้งเพื่ออัปเดตจำนวนวันและ render ใหม่
     }
 }
@@ -138,6 +134,16 @@ async function updateWorkoutStatus(dateString, isCompleted) {
  */
 function renderCalendar() {
     calendarGridEl.innerHTML = ''; // ล้าง grid เดิม
+
+    // เพิ่มชื่อวันในสัปดาห์
+    const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+    dayNames.forEach(name => {
+        const dayNameDiv = document.createElement('div');
+        dayNameDiv.classList.add('day-name');
+        dayNameDiv.textContent = name;
+        calendarGridEl.appendChild(dayNameDiv);
+    });
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth(); // 0-11
 
@@ -145,15 +151,6 @@ function renderCalendar() {
     currentMonthYearEl.textContent = new Date(year, month).toLocaleString('th-TH', {
         month: 'long',
         year: 'numeric'
-    });
-
-    // เพิ่มชื่อวันในสัปดาห์กลับเข้าไป (ถ้า clear ทั้งหมด)
-    const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-    dayNames.forEach(name => {
-        const dayNameDiv = document.createElement('div');
-        dayNameDiv.classList.add('day-name');
-        dayNameDiv.textContent = name;
-        calendarGridEl.appendChild(dayNameDiv);
     });
 
     // หาวันแรกของเดือน (0 = อาทิตย์, 1 = จันทร์, ...)
@@ -195,12 +192,28 @@ function renderCalendar() {
             dayDiv.classList.add('completed-day');
         }
 
-        // Event Listener สำหรับคลิกวันที่
-        dayDiv.addEventListener('click', () => {
-            selectedDate = currentDayInLoop; // อัปเดตวันที่ถูกเลือก
-            renderCalendar(); // Render ใหม่เพื่อไฮไลต์วันที่เลือก
-            // อัปเดต checkbox ตามสถานะของวันที่เลือก
-            workoutCompletedCheckbox.checked = !!completedWorkouts[currentDayYYYYMMDD];
+        // Event Listener สำหรับคลิกวันที่: จะ toggle สถานะ "ออกกำลังกายแล้ว" และเลือกวันนี้
+        dayDiv.addEventListener('click', async () => {
+            const clickedDayDate = new Date(year, month, day);
+            const clickedDayYYYYMMDD = formatDateToYYYYMMDD(clickedDayDate);
+
+            // 1. อัปเดตวันที่ถูกเลือกให้เป็นวันที่คลิก
+            selectedDate = clickedDayDate;
+
+            // 2. ตรวจสอบสถานะปัจจุบันและสลับสถานะ
+            const currentCompletionStatus = !!completedWorkouts[clickedDayYYYYMMDD];
+            const newCompletionStatus = !currentCompletionStatus;
+
+            // 3. อัปเดตสถานะใน Supabase
+            await updateWorkoutStatus(clickedDayYYYYMMDD, newCompletionStatus);
+
+            // 4. อัปเดต checkbox ให้ตรงกับสถานะใหม่ของวันที่ถูกเลือก
+            workoutCompletedCheckbox.checked = newCompletionStatus;
+
+            // renderCalendar() จะถูกเรียกโดย fetchWorkouts() ใน updateWorkoutStatus() อยู่แล้ว
+            // แต่เรียกอีกครั้งตรงนี้เพื่อให้ UI อัปเดตทันที (เช่น ไฮไลต์ selected-day)
+            // ก่อนที่ fetchWorkouts จะโหลดข้อมูลเสร็จและ render อีกครั้ง
+            renderCalendar();
         });
 
         calendarGridEl.appendChild(dayDiv);
@@ -242,7 +255,6 @@ function startTimer() {
         timeLeft = defaultSetTime;
     }
 
-
     isTimerRunning = true;
     updateTimerDisplay(); // อัปเดตครั้งแรกทันที
 
@@ -255,16 +267,15 @@ function startTimer() {
             notificationSound.play(); // เล่นเสียงแจ้งเตือน
 
             if (currentSet < totalSets) {
+                // ถ้ายังไม่ครบทุกเซ็ต:
                 currentSet++; // ไปยังเซ็ตถัดไป
                 timeLeft = defaultSetTime; // รีเซ็ตเวลาสำหรับเซ็ตใหม่
-                updateTimerDisplay();
-                startTimer(); // เริ่ม Timer ใหม่สำหรับเซ็ตถัดไป
+                updateTimerDisplay(); // อัปเดตหน้าจอ
+                isTimerRunning = false; // หยุด Timer ชั่วคราว เพื่อให้ผู้ใช้กด "เริ่ม" ใหม่
             } else {
-                // จบทุกเซ็ตแล้ว
-                isTimerRunning = false;
-                currentSet = totalSets; // แสดงเซ็ตสุดท้าย
-                updateTimerDisplay(); // แสดง 00:00
+                // ถ้าจบทุกเซ็ตแล้ว:
                 alert('ออกกำลังกายครบทุกเซ็ตแล้ว!');
+                resetTimer(); // เรียก resetTimer() เพื่อรีเซ็ตค่าทั้งหมดและเตรียมพร้อมสำหรับการเริ่มใหม่
             }
         }
         currentSetDisplay.textContent = currentSet;
@@ -285,13 +296,15 @@ function pauseTimer() {
 function resetTimer() {
     clearInterval(timerInterval);
     isTimerRunning = false;
-    timeLeft = 0;
-    currentSet = 0;
-    totalSets = parseInt(totalSetsInput.value); // ดึงค่าจาก input อีกครั้งเมื่อรีเซ็ต
+    timeLeft = 0; // ตั้งเวลาที่เหลือเป็น 0
+    currentSet = 0; // รีเซ็ตเซ็ตปัจจุบันเป็น 0
+    // ดึงค่าจาก input อีกครั้งเมื่อรีเซ็ต (เผื่อผู้ใช้เปลี่ยนค่าขณะ Timer หยุด)
+    totalSets = parseInt(totalSetsInput.value);
     defaultSetTime = parseInt(setTimeInput.value);
+
     displayTotalSets.textContent = totalSets;
     currentSetDisplay.textContent = currentSet;
-    updateTimerDisplay();
+    updateTimerDisplay(); // อัปเดต UI ให้แสดง 00:00
 }
 
 
@@ -308,7 +321,7 @@ nextMonthBtn.addEventListener('click', () => {
     renderCalendar();
 });
 
-// Checkbox สำหรับการออกกำลังกาย
+// Checkbox สำหรับการออกกำลังกาย (ยังคงอยู่เพื่อให้สามารถ toggle ได้จาก checkbox ด้วย)
 workoutCompletedCheckbox.addEventListener('change', async (event) => {
     const isChecked = event.target.checked;
     const dateToUpdate = formatDateToYYYYMMDD(selectedDate);
@@ -329,6 +342,10 @@ totalSetsInput.addEventListener('change', () => {
         totalSetsInput.value = 1;
     }
     displayTotalSets.textContent = totalSets;
+    // ถ้า Timer ไม่ได้กำลังทำงานและยังไม่เริ่มเซ็ตแรก ให้ปรับ currentSetDisplay ด้วย
+    if (!isTimerRunning && currentSet === 0) {
+        currentSetDisplay.textContent = 0;
+    }
 });
 
 // อัปเดต defaultSetTime เมื่อผู้ใช้เปลี่ยนค่าใน input
@@ -354,6 +371,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     timeLeft = defaultSetTime; // กำหนดเวลาเริ่มต้นตามค่า input
     updateTimerDisplay();
 
+    // กำหนด selectedDate เริ่มต้นเป็นวันปัจจุบันเสมอ
+    selectedDate = new Date();
+
     await fetchWorkouts(); // ดึงข้อมูลการออกกำลังกายครั้งแรก
-    renderCalendar(); // Render ปฏิทินเมื่อโหลดหน้า
+    // renderCalendar() ถูกเรียกภายใน fetchWorkouts() อยู่แล้ว
 });
