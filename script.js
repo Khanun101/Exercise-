@@ -46,7 +46,7 @@ const notificationSound = new Audio('notification.mp3');
 // --- ฟังก์ชันเกี่ยวกับการจัดการปฏิทิน ---
 
 /**
- * แปลงวันที่เป็น String ในรูปแบบ YYYY-MM-DD
+ * แปลงวันที่เป็น String ในรูปแบบYYYY-MM-DD
  * @param {Date} dateObj
  * @returns {string}
  */
@@ -68,9 +68,6 @@ async function fetchWorkouts() {
 
     if (error) {
         console.error('Error fetching workouts:', error.message);
-        // แสดง alert เฉพาะกรณีที่เป็น error ที่ไม่เกี่ยวกับ RLS (ซึ่ง RLS ควรจะแก้แล้ว)
-        // หรือถ้าอยากให้แสดงก็คงไว้ได้
-        // alert('เกิดข้อผิดพลาดในการดึงข้อมูล กรุณาลองใหม่!');
         return;
     }
 
@@ -89,7 +86,7 @@ async function fetchWorkouts() {
 
 /**
  * อัปเดตสถานะการออกกำลังกายใน Supabase
- * @param {string} dateString - YYYY-MM-DD format
+ * @param {string} dateString -YYYY-MM-DD format
  * @param {boolean} isCompleted
  */
 async function updateWorkoutStatus(dateString, isCompleted) {
@@ -296,15 +293,15 @@ function pauseTimer() {
 function resetTimer() {
     clearInterval(timerInterval);
     isTimerRunning = false;
-    timeLeft = 0; // ตั้งเวลาที่เหลือเป็น 0
-    currentSet = 0; // รีเซ็ตเซ็ตปัจจุบันเป็น 0
     // ดึงค่าจาก input อีกครั้งเมื่อรีเซ็ต (เผื่อผู้ใช้เปลี่ยนค่าขณะ Timer หยุด)
-    totalSets = parseInt(totalSetsInput.value);
-    defaultSetTime = parseInt(setTimeInput.value);
+    defaultSetTime = parseInt(setTimeInput.value); // ดึงค่าเวลาเริ่มต้นที่ตั้งไว้
+    timeLeft = defaultSetTime; // แก้ไขตรงนี้ให้เป็นค่าเริ่มต้นที่ตั้งไว้
+    currentSet = 0; // รีเซ็ตเซ็ตปัจจุบันเป็น 0
+    totalSets = parseInt(totalSetsInput.value); // ดึงค่าจำนวนเซ็ตทั้งหมด
 
     displayTotalSets.textContent = totalSets;
     currentSetDisplay.textContent = currentSet;
-    updateTimerDisplay(); // อัปเดต UI ให้แสดง 00:00
+    updateTimerDisplay(); // อัปเดต UI ให้แสดงค่าเวลาเริ่มต้น
 }
 
 
