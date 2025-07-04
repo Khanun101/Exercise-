@@ -293,11 +293,21 @@ function pauseTimer() {
 function resetTimer() {
     clearInterval(timerInterval);
     isTimerRunning = false;
+    
     // ดึงค่าจาก input อีกครั้งเมื่อรีเซ็ต (เผื่อผู้ใช้เปลี่ยนค่าขณะ Timer หยุด)
-    defaultSetTime = parseInt(setTimeInput.value); // ดึงค่าเวลาเริ่มต้นที่ตั้งไว้
-    timeLeft = defaultSetTime; // แก้ไขตรงนี้ให้เป็นค่าเริ่มต้นที่ตั้งไว้
+    defaultSetTime = parseInt(setTimeInput.value); 
+    if (isNaN(defaultSetTime) || defaultSetTime < 1) {
+        defaultSetTime = 60; // ค่าเริ่มต้น
+        setTimeInput.value = 60;
+    }
+    timeLeft = defaultSetTime; // กำหนดค่า timeLeft เป็นค่าเริ่มต้นที่ตั้งไว้
+
     currentSet = 0; // รีเซ็ตเซ็ตปัจจุบันเป็น 0
     totalSets = parseInt(totalSetsInput.value); // ดึงค่าจำนวนเซ็ตทั้งหมด
+    if (isNaN(totalSets) || totalSets < 1) {
+        totalSets = 1; // ค่าเริ่มต้น
+        totalSetsInput.value = 1;
+    }
 
     displayTotalSets.textContent = totalSets;
     currentSetDisplay.textContent = currentSet;
